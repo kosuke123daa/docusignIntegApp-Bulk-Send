@@ -2,30 +2,19 @@
     <lightning-card title="契約一括エンベロープ送信" icon-name="standard:contract">
         <div class="slds-p-around_medium">
 
-            <!-- Error / Info messages -->
+            <!-- エラーメッセージ -->
             <template if:true={errorMessage}>
                 <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
-                    <span class="slds-assistive-text">エラー</span>
                     <lightning-icon icon-name="utility:error" alternative-text="エラー" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                     {errorMessage}
                 </div>
             </template>
 
-            <template if:true={sendResults}>
-                <div class="slds-notify slds-notify_alert slds-alert_success slds-m-bottom_small" role="alert">
-                    <span class="slds-assistive-text">送信完了</span>
-                    <lightning-icon icon-name="utility:success" alternative-text="成功" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                    エンベロープ送信処理が完了しました。
-                </div>
-            </template>
-
-            <!-- Action buttons -->
+            <!-- 操作ボタン行 -->
             <div class="slds-m-bottom_small slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                <div>
-                    <span class="slds-text-body_small slds-text-color_weak">
-                        {selectedCount} 件選択中
-                    </span>
-                </div>
+                <span class="slds-text-body_small slds-text-color_weak">
+                    {selectedCount} 件選択中（最大99件まで一括送信可能）
+                </span>
                 <div>
                     <lightning-button
                         label="エンベロープを送信"
@@ -39,19 +28,20 @@
                         label="ステータス更新"
                         variant="neutral"
                         icon-name="utility:refresh"
+                        disabled={isLoading}
                         onclick={handleRefreshStatus}>
                     </lightning-button>
                 </div>
             </div>
 
-            <!-- Spinner -->
+            <!-- スピナー -->
             <template if:true={isLoading}>
-                <div class="slds-is-relative slds-p-around_large">
-                    <lightning-spinner alternative-text="読み込み中" size="medium"></lightning-spinner>
+                <div class="slds-is-relative" style="height:6rem;">
+                    <lightning-spinner alternative-text="処理中" size="medium"></lightning-spinner>
                 </div>
             </template>
 
-            <!-- Contract data table -->
+            <!-- 契約一覧テーブル -->
             <template if:false={isLoading}>
                 <lightning-datatable
                     key-field="Id"
@@ -59,20 +49,19 @@
                     columns={columns}
                     selected-rows={selectedRowIds}
                     onrowselection={handleRowSelection}
-                    hide-checkbox-column={hideCheckbox}
-                    draft-values={draftValues}>
+                    max-row-selection={maxRows}>
                 </lightning-datatable>
             </template>
 
-            <!-- Send results detail -->
-            <template if:true={sendResults}>
+            <!-- 送信結果 -->
+            <template if:true={hasSendResults}>
                 <div class="slds-m-top_medium">
                     <h3 class="slds-text-heading_small slds-m-bottom_x-small">送信結果</h3>
-                    <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
                         <thead>
                             <tr class="slds-line-height_reset">
                                 <th scope="col"><div class="slds-truncate">契約番号</div></th>
-                                <th scope="col"><div class="slds-truncate">ステータス</div></th>
+                                <th scope="col"><div class="slds-truncate">結果</div></th>
                                 <th scope="col"><div class="slds-truncate">エンベロープID / メッセージ</div></th>
                             </tr>
                         </thead>
@@ -80,12 +69,7 @@
                             <template for:each={sendResults} for:item="r">
                                 <tr key={r.contractId}>
                                     <td>{r.contractNumber}</td>
-                                    <td>
-                                        <lightning-badge
-                                            label={r.status}
-                                            class={r.badgeClass}>
-                                        </lightning-badge>
-                                    </td>
+                                    <td class={r.statusClass}><strong>{r.status}</strong></td>
                                     <td>{r.detail}</td>
                                 </tr>
                             </template>

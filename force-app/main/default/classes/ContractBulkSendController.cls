@@ -1,10 +1,12 @@
 public with sharing class ContractBulkSendController {
 
     private static final String TEMPLATE_ID = '6eed9b4d-ef60-437f-beaa-f852d61e2ac7';
+    private static final String TEMPLATE_NAME = '契約書テンプレート';
+    private static final String SIGNER_ROLE = 'Signer 1';
 
     @AuraEnabled(cacheable=true)
-    public static List<Contract> getContracts() {
-        return [
+    public static List<ContractWrapper> getContracts() {
+        List<Contract> contracts = [
             SELECT Id, ContractNumber, StartDate, EndDate, ContractTerm,
                    CustomerSignedId, CustomerSigned.Name, CustomerSigned.Email,
                    BillingStreet, BillingCity, BillingState,
@@ -12,10 +14,53 @@ public with sharing class ContractBulkSendController {
             FROM Contract
             ORDER BY ContractNumber ASC
         ];
+
+        Set<Id> contractIds = new Set<Id>();
+        for (Contract c : contracts) {
+            contractIds.add(c.Id);
+        }
+
+        Map<Id, dfsle.Envelope.Status> latestStatusMap = new Map<Id, dfsle.Envelope.Status>();
+        if (!contractIds.isEmpty()) {
+            try {
+                List<dfsle.Envelope.Status> statuses = dfsle.StatusService.getStatus(
+                    contractIds,
+                    200
+                );
+                for (dfsle.Envelope.Status s : statuses) {
+                    Id srcId = s.source != null ? s.source.id : null;
+                    if (srcId != null && !latestStatusMap.containsKey(srcId)) {
+                        latestStatusMap.put(srcId, s);
+                    }
+                }
+            } catch (Exception ex) {
+                // ステータス未取得でも一覧は表示する
+            }
+        }
+
+        List<ContractWrapper> wrappers = new List<ContractWrapper>();
+        for (Contract c : contracts) {
+            ContractWrapper w = new ContractWrapper();
+            w.Id            = c.Id;
+            w.contractNumber = c.ContractNumber;
+            w.startDate      = c.StartDate;
+            w.endDate        = c.EndDate;
+            w.contractTerm   = c.ContractTerm;
+            w.signerName     = c.CustomerSigned != null ? c.CustomerSigned.Name  : '';
+            w.signerEmail    = c.CustomerSigned != null ? c.CustomerSigned.Email : '';
+            w.billingAddress = buildAddress(c);
+
+            dfsle.Envelope.Status st = latestStatusMap.get(c.Id);
+            w.envelopeStatus = st != null ? st.status : '未送信';
+            w.envelopeSentDate = st != null ? st.sent : null;
+
+            wrappers.add(w);
+        }
+        return wrappers;
     }
 
     @AuraEnabled
-    public static List<Map<String, Object>> sendEnvelopes(List<Id> contractIds) {
+    public static List<SendResult> sendEnvelopes(List<Id> contractIds) {
         List<Contract> contracts = [
             SELECT Id, ContractNumber, StartDate, EndDate,
                    CustomerSignedId, CustomerSigned.Name, CustomerSigned.Email,
@@ -25,93 +70,133 @@ public with sharing class ContractBulkSendController {
             WHERE Id IN :contractIds
         ];
 
-        List<Map<String, Object>> results = new List<Map<String, Object>>();
+        dfsle.UUID templateUUID = dfsle.UUID.parse(TEMPLATE_ID);
+        List<SendResult> results = new List<SendResult>();
 
         for (Contract c : contracts) {
-            Map<String, Object> result = new Map<String, Object>();
-            result.put('contractId', c.Id);
-            result.put('contractNumber', c.ContractNumber);
+            SendResult r = new SendResult();
+            r.contractId     = c.Id;
+            r.contractNumber = c.ContractNumber;
 
             try {
-                dfsle.UUID templateUUID = dfsle.UUID.parse(TEMPLATE_ID);
-                dfsle.Template tmpl = dfsle.Template.fromId(templateUUID);
-
-                String billingAddress = buildAddress(c);
-                String startDateStr = c.StartDate != null ? String.valueOf(c.StartDate) : '';
-                String endDateStr   = c.EndDate   != null ? String.valueOf(c.EndDate)   : '';
-
-                // Tab values to merge into template fields
-                List<dfsle.Tab> tabs = new List<dfsle.Tab>{
-                    new dfsle.Tab(null, null, 'Address',   billingAddress, null, null, null, null, null, null, null, null),
-                    new dfsle.Tab(null, null, 'StartDate', startDateStr,   null, null, null, null, null, null, null, null),
-                    new dfsle.Tab(null, null, 'EndDate',   endDateStr,     null, null, null, null, null, null, null, null)
-                };
-
-                dfsle.Recipient signer = dfsle.Recipient.newEmbeddedSigner()
-                    .withName(c.CustomerSigned != null ? c.CustomerSigned.Name : '')
-                    .withEmail(c.CustomerSigned != null ? c.CustomerSigned.Email : '')
-                    .withTabs(tabs);
-
-                dfsle.Envelope envelope = dfsle.EnvelopeService.getEmptyEnvelope(
+                // (1) エンベロープ作成（契約レコードをソースとして紐付け）
+                dfsle.Envelope myEnvelope = dfsle.EnvelopeService.getEmptyEnvelope(
                     new dfsle.Entity(c.Id)
-                ).withTemplates(new List<dfsle.Template>{ tmpl })
-                 .withRecipients(new List<dfsle.Recipient>{ signer });
+                );
 
-                envelope = dfsle.EnvelopeService.sendEnvelope(envelope, true);
+                // (2) テンプレートからドキュメント作成
+                dfsle.Document myDocument = dfsle.Document.fromTemplate(
+                    templateUUID,
+                    TEMPLATE_NAME
+                );
+                myEnvelope = myEnvelope.withDocuments(
+                    new List<dfsle.Document>{ myDocument }
+                );
 
-                result.put('status', 'Sent');
-                result.put('envelopeId', String.valueOf(envelope.docuSignId));
-            } catch (Exception e) {
-                result.put('status', 'Error');
-                result.put('errorMessage', e.getMessage());
+                // (3) テンプレートフィールドにSalesforceデータを差し込む（Tabとして受信者に設定）
+                String billingAddress = buildAddress(c);
+                String startDateStr   = c.StartDate != null ? String.valueOf(c.StartDate) : '';
+                String endDateStr     = c.EndDate   != null ? String.valueOf(c.EndDate)   : '';
+
+                dfsle.Tab addressTab  = new dfsle.TextTab().withValue(billingAddress);
+                dfsle.Tab startDateTab = new dfsle.TextTab().withValue(startDateStr);
+                dfsle.Tab endDateTab  = new dfsle.TextTab().withValue(endDateStr);
+
+                // (4) 受信者（顧客調印者）を設定
+                // fromSource: name, email, phone, roleName（テンプレートのロール名と一致させること）, entity
+                dfsle.Recipient myRecipient = dfsle.Recipient.fromSource(
+                    c.CustomerSigned != null ? c.CustomerSigned.Name  : '',
+                    c.CustomerSigned != null ? c.CustomerSigned.Email : '',
+                    null,
+                    SIGNER_ROLE,
+                    new dfsle.Entity(c.CustomerSignedId)
+                ).withTabs(new List<dfsle.Tab>{ addressTab, startDateTab, endDateTab });
+
+                myEnvelope = myEnvelope.withRecipients(
+                    new List<dfsle.Recipient>{ myRecipient }
+                );
+
+                // (5) 即時送信
+                myEnvelope = dfsle.EnvelopeService.sendEnvelope(myEnvelope, true);
+
+                r.status     = 'Sent';
+                r.envelopeId = myEnvelope.docuSignId != null
+                    ? String.valueOf(myEnvelope.docuSignId)
+                    : '';
+            } catch (Exception ex) {
+                r.status       = 'Error';
+                r.errorMessage = ex.getMessage();
             }
 
-            results.add(result);
+            results.add(r);
         }
 
         return results;
     }
 
     @AuraEnabled
-    public static List<Map<String, Object>> getEnvelopeStatuses(List<Id> contractIds) {
-        List<dfsle__EnvelopeStatus__c> statuses = [
-            SELECT Id, dfsle__SourceId__c, dfsle__Status__c,
-                   dfsle__Sent__c, dfsle__DocuSignId__c
-            FROM dfsle__EnvelopeStatus__c
-            WHERE dfsle__SourceId__c IN :contractIds
-            ORDER BY dfsle__Sent__c DESC
-        ];
+    public static List<StatusWrapper> getEnvelopeStatuses(List<Id> contractIds) {
+        List<dfsle.Envelope.Status> statuses = dfsle.StatusService.getStatus(
+            new Set<Id>(contractIds),
+            contractIds.size() * 3
+        );
 
-        // Keep only the latest status per contract
-        Map<Id, dfsle__EnvelopeStatus__c> latestByContract = new Map<Id, dfsle__EnvelopeStatus__c>();
-        for (dfsle__EnvelopeStatus__c s : statuses) {
-            Id srcId = (Id) s.dfsle__SourceId__c;
-            if (!latestByContract.containsKey(srcId)) {
+        Map<Id, dfsle.Envelope.Status> latestByContract = new Map<Id, dfsle.Envelope.Status>();
+        for (dfsle.Envelope.Status s : statuses) {
+            Id srcId = s.source != null ? s.source.id : null;
+            if (srcId != null && !latestByContract.containsKey(srcId)) {
                 latestByContract.put(srcId, s);
             }
         }
 
-        List<Map<String, Object>> results = new List<Map<String, Object>>();
-        for (Id contractId : latestByContract.keySet()) {
-            dfsle__EnvelopeStatus__c s = latestByContract.get(contractId);
-            Map<String, Object> row = new Map<String, Object>();
-            row.put('contractId', contractId);
-            row.put('envelopeStatus', s.dfsle__Status__c);
-            row.put('sentDate', s.dfsle__Sent__c);
-            row.put('envelopeId', s.dfsle__DocuSignId__c);
-            results.add(row);
+        List<StatusWrapper> results = new List<StatusWrapper>();
+        for (Id cId : latestByContract.keySet()) {
+            dfsle.Envelope.Status s = latestByContract.get(cId);
+            StatusWrapper sw = new StatusWrapper();
+            sw.contractId     = cId;
+            sw.envelopeStatus = s.status;
+            sw.sentDate       = s.sent;
+            sw.envelopeId     = s.docuSignId != null ? String.valueOf(s.docuSignId) : '';
+            results.add(sw);
         }
-
         return results;
     }
 
     private static String buildAddress(Contract c) {
         List<String> parts = new List<String>();
-        if (String.isNotBlank(c.BillingStreet))     parts.add(c.BillingStreet);
-        if (String.isNotBlank(c.BillingCity))       parts.add(c.BillingCity);
-        if (String.isNotBlank(c.BillingState))      parts.add(c.BillingState);
         if (String.isNotBlank(c.BillingPostalCode)) parts.add(c.BillingPostalCode);
+        if (String.isNotBlank(c.BillingState))      parts.add(c.BillingState);
+        if (String.isNotBlank(c.BillingCity))       parts.add(c.BillingCity);
+        if (String.isNotBlank(c.BillingStreet))     parts.add(c.BillingStreet);
         if (String.isNotBlank(c.BillingCountry))    parts.add(c.BillingCountry);
-        return String.join(parts, ', ');
+        return String.join(parts, ' ');
+    }
+
+    public class ContractWrapper {
+        @AuraEnabled public Id     Id              { get; set; }
+        @AuraEnabled public String contractNumber  { get; set; }
+        @AuraEnabled public Date   startDate       { get; set; }
+        @AuraEnabled public Date   endDate         { get; set; }
+        @AuraEnabled public Integer contractTerm   { get; set; }
+        @AuraEnabled public String signerName      { get; set; }
+        @AuraEnabled public String signerEmail     { get; set; }
+        @AuraEnabled public String billingAddress  { get; set; }
+        @AuraEnabled public String envelopeStatus  { get; set; }
+        @AuraEnabled public Datetime envelopeSentDate { get; set; }
+    }
+
+    public class SendResult {
+        @AuraEnabled public Id     contractId     { get; set; }
+        @AuraEnabled public String contractNumber { get; set; }
+        @AuraEnabled public String status         { get; set; }
+        @AuraEnabled public String envelopeId     { get; set; }
+        @AuraEnabled public String errorMessage   { get; set; }
+    }
+
+    public class StatusWrapper {
+        @AuraEnabled public Id       contractId     { get; set; }
+        @AuraEnabled public String   envelopeStatus { get; set; }
+        @AuraEnabled public Datetime sentDate       { get; set; }
+        @AuraEnabled public String   envelopeId     { get; set; }
     }
 }
