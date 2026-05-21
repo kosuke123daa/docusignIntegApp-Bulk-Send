@@ -72,7 +72,6 @@ public with sharing class ContractBulkSendController {
 
         dfsle.UUID templateUUID = dfsle.UUID.parse(TEMPLATE_ID);
 
-        // 結果リストとエンベロープリストを並行管理（インデックスで紐付け）
         List<SendResult> results           = new List<SendResult>();
         List<dfsle.Envelope> toSend        = new List<dfsle.Envelope>();
         List<Integer> toSendResultIndexes  = new List<Integer>();
@@ -111,9 +110,6 @@ public with sharing class ContractBulkSendController {
 
         if (toSend.isEmpty()) return results;
 
-        // sendEnvelopes（複数）: calloutのみ実行（DMLなし）
-        // ※ sendEnvelope（単数）をループすると1件目のDML後に2件目のcalloutが失敗するため
-        //   sendEnvelopes（複数）で全calloutをまとめて実行してからsaveSentEnvelopesでDML
         List<dfsle.Envelope> sent = dfsle.EnvelopeService.sendEnvelopes(toSend);
 
         List<dfsle.Envelope> successList = new List<dfsle.Envelope>();
@@ -130,7 +126,6 @@ public with sharing class ContractBulkSendController {
             }
         }
 
-        // 成功分のSalesforceレコード保存（DMLはcallout完了後）
         if (!successList.isEmpty()) {
             dfsle.EnvelopeService.saveSentEnvelopes(successList);
         }
