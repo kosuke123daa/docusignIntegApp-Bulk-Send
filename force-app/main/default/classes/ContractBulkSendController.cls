@@ -71,64 +71,70 @@ public with sharing class ContractBulkSendController {
         ];
 
         dfsle.UUID templateUUID = dfsle.UUID.parse(TEMPLATE_ID);
-        List<SendResult> results = new List<SendResult>();
 
-        for (Contract c : contracts) {
+        // 結果リストとエンベロープリストを並行管理（インデックスで紐付け）
+        List<SendResult> results           = new List<SendResult>();
+        List<dfsle.Envelope> toSend        = new List<dfsle.Envelope>();
+        List<Integer> toSendResultIndexes  = new List<Integer>();
+
+        for (Integer i = 0; i < contracts.size(); i++) {
+            Contract c   = contracts[i];
             SendResult r = new SendResult();
             r.contractId     = c.Id;
             r.contractNumber = c.ContractNumber;
+            results.add(r);
 
             try {
-                // (1) エンベロープ作成（契約レコードをソースとして紐付け）
-                dfsle.Envelope myEnvelope = dfsle.EnvelopeService.getEmptyEnvelope(
+                // テンプレートのマージフィールドがContractレコードから自動取得するため
+                // ソースエンティティにContractのIdを指定する
+                dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
                     new dfsle.Entity(c.Id)
-                );
+                )
+                .withDocuments(new List<dfsle.Document>{
+                    dfsle.Document.fromTemplate(templateUUID, TEMPLATE_NAME)
+                })
+                .withRecipients(new List<dfsle.Recipient>{
+                    dfsle.Recipient.fromSource(
+                        c.CustomerSigned != null ? c.CustomerSigned.Name  : '',
+                        c.CustomerSigned != null ? c.CustomerSigned.Email : '',
+                        null,
+                        SIGNER_ROLE,
+                        new dfsle.Entity(c.CustomerSignedId)
+                    )
+                });
 
-                // (2) テンプレートからドキュメント作成
-                dfsle.Document myDocument = dfsle.Document.fromTemplate(
-                    templateUUID,
-                    TEMPLATE_NAME
-                );
-                myEnvelope = myEnvelope.withDocuments(
-                    new List<dfsle.Document>{ myDocument }
-                );
-
-                // (3) テンプレートフィールドにSalesforceデータを差し込む（Tabとして受信者に設定）
-                String billingAddress = buildAddress(c);
-                String startDateStr   = c.StartDate != null ? String.valueOf(c.StartDate) : '';
-                String endDateStr     = c.EndDate   != null ? String.valueOf(c.EndDate)   : '';
-
-                dfsle.Tab addressTab  = new dfsle.TextTab().withValue(billingAddress);
-                dfsle.Tab startDateTab = new dfsle.TextTab().withValue(startDateStr);
-                dfsle.Tab endDateTab  = new dfsle.TextTab().withValue(endDateStr);
-
-                // (4) 受信者（顧客調印者）を設定
-                // fromSource: name, email, phone, roleName（テンプレートのロール名と一致させること）, entity
-                dfsle.Recipient myRecipient = dfsle.Recipient.fromSource(
-                    c.CustomerSigned != null ? c.CustomerSigned.Name  : '',
-                    c.CustomerSigned != null ? c.CustomerSigned.Email : '',
-                    null,
-                    SIGNER_ROLE,
-                    new dfsle.Entity(c.CustomerSignedId)
-                ).withTabs(new List<dfsle.Tab>{ addressTab, startDateTab, endDateTab });
-
-                myEnvelope = myEnvelope.withRecipients(
-                    new List<dfsle.Recipient>{ myRecipient }
-                );
-
-                // (5) 即時送信
-                myEnvelope = dfsle.EnvelopeService.sendEnvelope(myEnvelope, true);
-
-                r.status     = 'Sent';
-                r.envelopeId = myEnvelope.docuSignId != null
-                    ? String.valueOf(myEnvelope.docuSignId)
-                    : '';
+                toSend.add(env);
+                toSendResultIndexes.add(i);
             } catch (Exception ex) {
                 r.status       = 'Error';
                 r.errorMessage = ex.getMessage();
             }
+        }
 
-            results.add(r);
+        if (toSend.isEmpty()) return results;
+
+        // sendEnvelopes（複数）: calloutのみ実行（DMLなし）
+        // ※ sendEnvelope（単数）をループすると1件目のDML後に2件目のcalloutが失敗するため
+        //   sendEnvelopes（複数）で全calloutをまとめて実行してからsaveSentEnvelopesでDML
+        List<dfsle.Envelope> sent = dfsle.EnvelopeService.sendEnvelopes(toSend);
+
+        List<dfsle.Envelope> successList = new List<dfsle.Envelope>();
+        for (Integer j = 0; j < sent.size(); j++) {
+            dfsle.Envelope s = sent[j];
+            SendResult r     = results[toSendResultIndexes[j]];
+            if (s.error == null) {
+                r.status     = 'Sent';
+                r.envelopeId = s.docuSignId != null ? String.valueOf(s.docuSignId) : '';
+                successList.add(s);
+            } else {
+                r.status       = 'Error';
+                r.errorMessage = s.error.message;
+            }
+        }
+
+        // 成功分のSalesforceレコード保存（DMLはcallout完了後）
+        if (!successList.isEmpty()) {
+            dfsle.EnvelopeService.saveSentEnvelopes(successList);
         }
 
         return results;
