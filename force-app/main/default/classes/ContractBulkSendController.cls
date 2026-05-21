@@ -85,8 +85,18 @@ public with sharing class ContractBulkSendController {
             results.add(r);
 
             try {
-                // テンプレートのマージフィールドがContractレコードから自動取得するため
-                // ソースエンティティにContractのIdを指定する
+                // テンプレートタブに差し込む値を準備
+                // withLabel() でテンプレートの tabLabel と一致させることで値が注入される
+                String billingAddress = buildAddress(c);
+                String startDateStr   = c.StartDate != null ? String.valueOf(c.StartDate) : '';
+                String endDateStr     = c.EndDate   != null ? String.valueOf(c.EndDate)   : '';
+
+                List<dfsle.Tab> tabs = new List<dfsle.Tab>{
+                    new dfsle.TextTab().withLabel('Address').withValue(billingAddress),
+                    new dfsle.TextTab().withLabel('StartDate').withValue(startDateStr),
+                    new dfsle.TextTab().withLabel('EndDate').withValue(endDateStr)
+                };
+
                 dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
                     new dfsle.Entity(c.Id)
                 )
@@ -100,7 +110,7 @@ public with sharing class ContractBulkSendController {
                         null,
                         SIGNER_ROLE,
                         new dfsle.Entity(c.CustomerSignedId)
-                    )
+                    ).withTabs(tabs)
                 });
 
                 toSend.add(env);
