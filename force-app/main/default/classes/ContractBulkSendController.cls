@@ -92,9 +92,9 @@ public with sharing class ContractBulkSendController {
                 String endDateStr     = c.EndDate   != null ? String.valueOf(c.EndDate)   : '';
 
                 List<dfsle.Tab> tabs = new List<dfsle.Tab>{
-                    new dfsle.TextTab().withLabel('Address').withValue(billingAddress),
-                    new dfsle.TextTab().withLabel('StartDate').withValue(startDateStr),
-                    new dfsle.TextTab().withLabel('EndDate').withValue(endDateStr)
+                    new dfsle.TextTab().withTabLabel('Address').withValue(billingAddress),
+                    new dfsle.TextTab().withTabLabel('StartDate').withValue(startDateStr),
+                    new dfsle.TextTab().withTabLabel('EndDate').withValue(endDateStr)
                 };
 
                 dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
