@@ -110,6 +110,19 @@ export default class ContractBulkSend extends LightningElement {
         }
     }
 
+    handleResetStatus() {
+        this.tableData = this._rawData.map(row => {
+            const updated = Object.assign({}, row, {
+                envelopeStatus:   '未送信',
+                envelopeSentDate: null
+            });
+            return this._addStatusClass(updated);
+        });
+        this._rawData = this.tableData.map(r => Object.assign({}, r));
+        this.sendResults  = null;
+        this.errorMessage = null;
+    }
+
     async handleRefreshStatus() {
         this.isLoading    = true;
         this.errorMessage = null;

@@ -29,7 +29,15 @@
                         variant="neutral"
                         icon-name="utility:refresh"
                         disabled={isLoading}
-                        onclick={handleRefreshStatus}>
+                        onclick={handleRefreshStatus}
+                        class="slds-m-right_x-small">
+                    </lightning-button>
+                    <lightning-button
+                        label="全ステータスを未送信にする"
+                        variant="destructive-text"
+                        icon-name="utility:undo"
+                        disabled={isLoading}
+                        onclick={handleResetStatus}>
                     </lightning-button>
                 </div>
             </div>
