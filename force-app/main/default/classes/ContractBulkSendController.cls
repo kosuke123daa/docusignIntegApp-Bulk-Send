@@ -126,7 +126,7 @@ public with sharing class ContractBulkSendController {
                 successList.add(s);
             } else {
                 r.status       = 'Error';
-                r.errorMessage = s.error;
+                r.errorMessage = String.valueOf(s.error);
             }
         }
 
