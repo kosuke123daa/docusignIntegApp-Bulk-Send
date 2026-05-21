@@ -1,0 +1,99 @@
+<template>
+    <lightning-card title="契約一括エンベロープ送信" icon-name="standard:contract">
+        <div class="slds-p-around_medium">
+
+            <!-- Error / Info messages -->
+            <template if:true={errorMessage}>
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+                    <span class="slds-assistive-text">エラー</span>
+                    <lightning-icon icon-name="utility:error" alternative-text="エラー" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </template>
+
+            <template if:true={sendResults}>
+                <div class="slds-notify slds-notify_alert slds-alert_success slds-m-bottom_small" role="alert">
+                    <span class="slds-assistive-text">送信完了</span>
+                    <lightning-icon icon-name="utility:success" alternative-text="成功" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    エンベロープ送信処理が完了しました。
+                </div>
+            </template>
+
+            <!-- Action buttons -->
+            <div class="slds-m-bottom_small slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <div>
+                    <span class="slds-text-body_small slds-text-color_weak">
+                        {selectedCount} 件選択中
+                    </span>
+                </div>
+                <div>
+                    <lightning-button
+                        label="エンベロープを送信"
+                        variant="brand"
+                        icon-name="utility:send"
+                        disabled={isSendDisabled}
+                        onclick={handleSend}
+                        class="slds-m-right_x-small">
+                    </lightning-button>
+                    <lightning-button
+                        label="ステータス更新"
+                        variant="neutral"
+                        icon-name="utility:refresh"
+                        onclick={handleRefreshStatus}>
+                    </lightning-button>
+                </div>
+            </div>
+
+            <!-- Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-around_large">
+                    <lightning-spinner alternative-text="読み込み中" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Contract data table -->
+            <template if:false={isLoading}>
+                <lightning-datatable
+                    key-field="Id"
+                    data={tableData}
+                    columns={columns}
+                    selected-rows={selectedRowIds}
+                    onrowselection={handleRowSelection}
+                    hide-checkbox-column={hideCheckbox}
+                    draft-values={draftValues}>
+                </lightning-datatable>
+            </template>
+
+            <!-- Send results detail -->
+            <template if:true={sendResults}>
+                <div class="slds-m-top_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">送信結果</h3>
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col"><div class="slds-truncate">契約番号</div></th>
+                                <th scope="col"><div class="slds-truncate">ステータス</div></th>
+                                <th scope="col"><div class="slds-truncate">エンベロープID / メッセージ</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={sendResults} for:item="r">
+                                <tr key={r.contractId}>
+                                    <td>{r.contractNumber}</td>
+                                    <td>
+                                        <lightning-badge
+                                            label={r.status}
+                                            class={r.badgeClass}>
+                                        </lightning-badge>
+                                    </td>
+                                    <td>{r.detail}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>
