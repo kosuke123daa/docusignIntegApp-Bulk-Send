@@ -85,24 +85,6 @@ public with sharing class ContractBulkSendController {
             results.add(r);
 
             try {
-                List<dfsle.Tab> tabs = new List<dfsle.Tab>{
-                    new dfsle.TextTab()
-                        .withDataLabel('Address')
-                        .withMergeField(new dfsle.Tab.MergeField(
-                            'contract.billingstreet', null, null, false, false
-                        )),
-                    new dfsle.TextTab()
-                        .withDataLabel('StartDate')
-                        .withMergeField(new dfsle.Tab.MergeField(
-                            'contract.startdate', null, null, false, false
-                        )),
-                    new dfsle.TextTab()
-                        .withDataLabel('EndDate')
-                        .withMergeField(new dfsle.Tab.MergeField(
-                            'contract.enddate', null, null, false, false
-                        ))
-                };
-
                 dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
                     new dfsle.Entity(c.Id)
                 )
@@ -116,7 +98,7 @@ public with sharing class ContractBulkSendController {
                         null,
                         SIGNER_ROLE,
                         new dfsle.Entity(c.CustomerSignedId)
-                    ).withTabs(tabs)
+                    )
                 });
 
                 toSend.add(env);
