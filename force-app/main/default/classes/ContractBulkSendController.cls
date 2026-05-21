@@ -85,16 +85,22 @@ public with sharing class ContractBulkSendController {
             results.add(r);
 
             try {
-                // テンプレートタブに差し込む値を準備
-                // withLabel() でテンプレートの tabLabel と一致させることで値が注入される
-                String billingAddress = buildAddress(c);
-                String startDateStr   = c.StartDate != null ? String.valueOf(c.StartDate) : '';
-                String endDateStr     = c.EndDate   != null ? String.valueOf(c.EndDate)   : '';
-
                 List<dfsle.Tab> tabs = new List<dfsle.Tab>{
-                    new dfsle.TextTab().withDataLabel('Address').withValue(billingAddress),
-                    new dfsle.TextTab().withDataLabel('StartDate').withValue(startDateStr),
-                    new dfsle.TextTab().withDataLabel('EndDate').withValue(endDateStr)
+                    new dfsle.TextTab()
+                        .withDataLabel('Address')
+                        .withMergeField(new dfsle.Tab.MergeField(
+                            'contract.billingstreet', null, null, false, false
+                        )),
+                    new dfsle.TextTab()
+                        .withDataLabel('StartDate')
+                        .withMergeField(new dfsle.Tab.MergeField(
+                            'contract.startdate', null, null, false, false
+                        )),
+                    new dfsle.TextTab()
+                        .withDataLabel('EndDate')
+                        .withMergeField(new dfsle.Tab.MergeField(
+                            'contract.enddate', null, null, false, false
+                        ))
                 };
 
                 dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
