@@ -2,7 +2,7 @@ public with sharing class ContractBulkSendController {
 
     private static final String TEMPLATE_ID = '6eed9b4d-ef60-437f-beaa-f852d61e2ac7';
     private static final String TEMPLATE_NAME = '契約書テンプレート';
-    private static final String SIGNER_ROLE = 'Signer 1';
+    private static final String SIGNER_ROLE = '契約者';
 
     @AuraEnabled(cacheable=true)
     public static List<ContractWrapper> getContracts() {
