@@ -13,7 +13,6 @@ const COLUMNS = [
     { label: '契約期間（月）',         fieldName: 'contractTerm',    type: 'number' },
     { label: '顧客調印者',            fieldName: 'signerName',      type: 'text' },
     { label: 'メール',               fieldName: 'signerEmail',     type: 'email' },
-    { label: '請求先住所',            fieldName: 'billingAddress',  type: 'text' },
     {
         label: 'エンベロープステータス',
         fieldName: 'envelopeStatus',
