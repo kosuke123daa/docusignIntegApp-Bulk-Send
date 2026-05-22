@@ -1,0 +1,422 @@
+<template>
+    <lightning-card title="DocuSign Workspace Manager" icon-name="standard:document">
+
+        <!-- ── スピナー ── -->
+        <template if:true={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="読み込み中" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ── エラー表示 ── -->
+        <template if:true={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-around_small" role="alert">
+                <span class="slds-assistive-text">エラー</span>
+                <lightning-icon icon-name="utility:error" alternative-text="エラー" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                {errorMessage}
+            </div>
+        </template>
+
+        <!-- ── 成功通知 ── -->
+        <template if:true={successMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_success slds-m-around_small" role="status">
+                <lightning-icon icon-name="utility:success" alternative-text="成功" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                {successMessage}
+            </div>
+        </template>
+
+        <div class="slds-p-around_medium">
+
+            <!-- ══ ワークスペース情報バナー ══ -->
+            <template if:true={workspaceId}>
+                <div class="workspace-banner slds-m-bottom_medium">
+                    <lightning-icon icon-name="utility:connected_apps" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    <strong>ワークスペースID:</strong> {workspaceId}
+                    &nbsp;|&nbsp;
+                    <a href={workspaceUrl} target="_blank" rel="noopener noreferrer">
+                        DocuSignで開く
+                        <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                    </a>
+                </div>
+            </template>
+
+            <!-- ══ タブ ══ -->
+            <lightning-tabset active-tab-value={activeTab} onactive={handleTabChange}>
+
+                <!-- ── Tab 1: ワークスペース ── -->
+                <lightning-tab label="ワークスペース" value="workspace">
+                    <div class="slds-p-top_medium">
+
+                        <template if:false={workspaceId}>
+                            <p class="slds-m-bottom_small slds-text-color_weak">この商談にはまだワークスペースが作成されていません。</p>
+                            <lightning-input
+                                label="ワークスペース名"
+                                value={newWorkspaceName}
+                                onchange={handleWorkspaceNameChange}
+                                class="slds-m-bottom_small"
+                                placeholder="例: 〇〇商談ワークスペース">
+                            </lightning-input>
+                            <lightning-button
+                                label="ワークスペースを作成"
+                                variant="brand"
+                                onclick={handleCreateWorkspace}
+                                disabled={isLoading}>
+                            </lightning-button>
+                        </template>
+
+                        <template if:true={workspaceId}>
+                            <dl class="slds-dl_horizontal">
+                                <dt class="slds-dl_horizontal__label slds-text-color_weak">ワークスペースID</dt>
+                                <dd class="slds-dl_horizontal__detail">{workspaceId}</dd>
+                                <dt class="slds-dl_horizontal__label slds-text-color_weak">ワークスペース名</dt>
+                                <dd class="slds-dl_horizontal__detail">{workspaceName}</dd>
+                                <dt class="slds-dl_horizontal__label slds-text-color_weak">URL</dt>
+                                <dd class="slds-dl_horizontal__detail">
+                                    <a href={workspaceUrl} target="_blank" rel="noopener noreferrer">{workspaceUrl}</a>
+                                </dd>
+                            </dl>
+                            <lightning-button
+                                label="情報を更新"
+                                variant="neutral"
+                                icon-name="utility:refresh"
+                                onclick={handleRefreshWorkspace}
+                                class="slds-m-top_medium"
+                                disabled={isLoading}>
+                            </lightning-button>
+
+                            <!-- タスク一覧（アップロード依頼 + エンベロープ統合） -->
+                            <div class="slds-m-top_large">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                    <h3 class="slds-text-heading_small slds-grow">タスク一覧</h3>
+                                    <lightning-button-icon
+                                        icon-name="utility:refresh"
+                                        alternative-text="更新"
+                                        size="small"
+                                        onclick={handleRefreshTasks}
+                                        disabled={isLoading}>
+                                    </lightning-button-icon>
+                                </div>
+                                <template if:true={hasCombinedTasks}>
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                                        <thead>
+                                            <tr class="slds-line-height_reset">
+                                                <th scope="col"><div class="slds-truncate">名前</div></th>
+                                                <th scope="col"><div class="slds-truncate">受信者</div></th>
+                                                <th scope="col"><div class="slds-truncate">ステータス</div></th>
+                                                <th scope="col"><div class="slds-truncate">最終変更</div></th>
+                                                <th scope="col"><div class="slds-truncate">アクション</div></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={combinedTaskList} for:item="task">
+                                                <tr key={task.id}>
+                                                    <td>
+                                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                                            <lightning-icon icon-name={task.iconName} size="x-small" class="slds-m-right_x-small" alternative-text={task.typeLabel}></lightning-icon>
+                                                            <div>
+                                                                <div class="slds-truncate" title={task.name}>{task.name}</div>
+                                                                <div class="slds-text-body_small slds-text-color_weak">{task.typeLabel}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td><div class="slds-truncate">{task.recipient}</div></td>
+                                                    <td><lightning-badge label={task.statusLabel}></lightning-badge></td>
+                                                    <td><div class="slds-truncate">{task.lastModified}</div></td>
+                                                    <td>
+                                                        <template if:true={task.isEditableEnvelope}>
+                                                            <a href={task.editUrl} target="_blank" rel="noopener noreferrer">
+                                                                <lightning-button label="編集" variant="neutral" size="small"></lightning-button>
+                                                            </a>
+                                                        </template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </template>
+                                <template if:false={hasCombinedTasks}>
+                                    <p class="slds-text-color_weak">タスクはまだ作成されていません。</p>
+                                </template>
+                            </div>
+
+                            <!-- メンバー一覧 -->
+                            <div class="slds-m-top_large">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">メンバー一覧</h3>
+                                <template if:true={workspaceUsers.length}>
+                                    <div class="slds-box">
+                                        <template for:each={workspaceUsers} for:item="u">
+                                            <div key={u.user_id} class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                                <lightning-icon icon-name="standard:person_account" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <span class="slds-grow">{u.first_name} {u.last_name}</span>
+                                                <span class="slds-text-color_weak slds-m-right_small">{u.email}</span>
+                                                <lightning-badge label={u.role_name}></lightning-badge>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={workspaceUsers.length}>
+                                    <p class="slds-text-color_weak">メンバーはまだいません。</p>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ── Tab 2: ドキュメント ── -->
+                <lightning-tab label="ドキュメント" value="documents">
+                    <div class="slds-p-top_medium">
+
+                        <template if:false={workspaceId}>
+                            <p class="slds-text-color_weak">先にワークスペースを作成してください。</p>
+                        </template>
+
+                        <template if:true={workspaceId}>
+                            <div class="slds-grid slds-gutters slds-wrap">
+
+                                <!-- 商談添付ファイル -->
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">商談の添付ファイル</h3>
+                                    <template if:true={opportunityFiles.length}>
+                                        <template for:each={opportunityFiles} for:item="file">
+                                            <div key={file.contentDocumentId} class="file-row slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                                <lightning-icon icon-name={file.iconName} size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <span class="slds-truncate slds-grow">{file.title}</span>
+                                                <lightning-button
+                                                    label="アップロード"
+                                                    variant="neutral"
+                                                    size="small"
+                                                    data-id={file.contentDocumentId}
+                                                    onclick={handleUploadDocument}
+                                                    disabled={isLoading}>
+                                                </lightning-button>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={opportunityFiles.length}>
+                                        <p class="slds-text-color_weak">アップロード可能なファイルがありません（PDF/Word/画像）。</p>
+                                    </template>
+                                </div>
+
+                                <!-- ワークスペース内ドキュメント -->
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small">
+                                        <h3 class="slds-text-heading_small slds-grow">ワークスペース内ドキュメント</h3>
+                                        <lightning-button-icon
+                                            icon-name="utility:refresh"
+                                            alternative-text="更新"
+                                            size="small"
+                                            onclick={handleRefreshWorkspaceDocuments}
+                                            disabled={isLoading}>
+                                        </lightning-button-icon>
+                                    </div>
+                                    <template if:true={workspaceDocuments.length}>
+                                        <template for:each={workspaceDocuments} for:item="doc">
+                                            <div key={doc.document_id} class="file-row slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                                <lightning-icon icon-name="doctype:unknown" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <span class="slds-truncate">{doc.name}</span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={workspaceDocuments.length}>
+                                        <p class="slds-text-color_weak">ドキュメントはまだアップロードされていません。</p>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ── Tab 3: ユーザー ── -->
+                <lightning-tab label="ユーザー" value="users">
+                    <div class="slds-p-top_medium">
+
+                        <template if:false={workspaceId}>
+                            <p class="slds-text-color_weak">先にワークスペースを作成してください。</p>
+                        </template>
+
+                        <template if:true={workspaceId}>
+                            <div class="slds-box slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">ユーザーを追加</h3>
+
+                                <!-- 関連コンタクトから選択 -->
+                                <template if:true={opportunityContacts.length}>
+                                    <p class="slds-text-title slds-m-bottom_xx-small">関連コンタクトから選択:</p>
+                                    <template for:each={opportunityContacts} for:item="contact">
+                                        <div key={contact.contactId} class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                            <span class="slds-grow">{contact.name} ({contact.email})</span>
+                                            <lightning-button
+                                                label="選択"
+                                                variant="neutral"
+                                                size="small"
+                                                data-email={contact.email}
+                                                onclick={handleSelectContact}>
+                                            </lightning-button>
+                                        </div>
+                                    </template>
+                                    <div class="slds-m-vertical_x-small slds-border_bottom"></div>
+                                </template>
+
+                                <lightning-input
+                                    label="メールアドレス"
+                                    value={newUserEmail}
+                                    onchange={handleUserEmailChange}
+                                    type="email"
+                                    class="slds-m-bottom_small"
+                                    placeholder="user@example.com">
+                                </lightning-input>
+
+                                <template if:true={assignableRoles.length}>
+                                    <lightning-combobox
+                                        label="ロール"
+                                        value={selectedRoleId}
+                                        options={roleOptions}
+                                        onchange={handleRoleChange}
+                                        class="slds-m-bottom_small">
+                                    </lightning-combobox>
+                                </template>
+
+                                <lightning-button
+                                    label="ユーザーを追加"
+                                    variant="brand"
+                                    onclick={handleAddUser}
+                                    disabled={isLoading}>
+                                </lightning-button>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ── Tab 4: エンベロープ ── -->
+                <lightning-tab label="エンベロープ" value="envelopes">
+                    <div class="slds-p-top_medium">
+
+                        <template if:false={workspaceId}>
+                            <p class="slds-text-color_weak">先にワークスペースを作成してください。</p>
+                        </template>
+
+                        <template if:true={workspaceId}>
+                            <!-- エンベロープ作成フォーム -->
+                            <div class="slds-box slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">エンベロープドラフトを作成</h3>
+                                <lightning-input
+                                    label="エンベロープ名"
+                                    value={newEnvelopeName}
+                                    onchange={handleEnvelopeNameChange}
+                                    class="slds-m-bottom_small"
+                                    placeholder="例: 〇〇契約書署名依頼">
+                                </lightning-input>
+
+                                <template if:true={workspaceDocuments.length}>
+                                    <p class="slds-text-title slds-m-bottom_xx-small">ドキュメントを選択（任意）:</p>
+                                    <template for:each={workspaceDocuments} for:item="doc">
+                                        <lightning-input
+                                            key={doc.document_id}
+                                            type="checkbox"
+                                            label={doc.name}
+                                            data-id={doc.document_id}
+                                            onchange={handleDocumentCheckboxChange}
+                                            class="slds-m-bottom_xx-small">
+                                        </lightning-input>
+                                    </template>
+                                </template>
+
+                                <lightning-button
+                                    label="エンベロープを作成"
+                                    variant="brand"
+                                    onclick={handleCreateEnvelope}
+                                    class="slds-m-top_small"
+                                    disabled={isLoading}>
+                                </lightning-button>
+                            </div>
+
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ── Tab 5: アップロードリクエスト ── -->
+                <lightning-tab label="アップロードリクエスト" value="uploadRequests">
+                    <div class="slds-p-top_medium">
+
+                        <template if:false={workspaceId}>
+                            <p class="slds-text-color_weak">先にワークスペースを作成してください。</p>
+                        </template>
+
+                        <template if:true={workspaceId}>
+                            <div class="slds-box">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">アップロードリクエストを作成</h3>
+
+                                <lightning-input
+                                    label="リクエスト名"
+                                    value={uploadRequestName}
+                                    onchange={handleUrNameChange}
+                                    class="slds-m-bottom_small"
+                                    placeholder="例: 身分証明書のアップロード">
+                                </lightning-input>
+                                <lightning-textarea
+                                    label="説明（任意）"
+                                    value={uploadRequestDescription}
+                                    onchange={handleUrDescriptionChange}
+                                    class="slds-m-bottom_small"
+                                    max-length="500">
+                                </lightning-textarea>
+                                <lightning-input
+                                    label="期限（任意）"
+                                    type="date"
+                                    value={uploadRequestDueDate}
+                                    onchange={handleUrDueDateChange}
+                                    class="slds-m-bottom_small">
+                                </lightning-input>
+                                <template if:true={workspaceUsers.length}>
+                                    <lightning-combobox
+                                        label="担当者（ワークスペースユーザーから選択）"
+                                        value={selectedUploadRequestUserId}
+                                        options={uploadRequestUserOptions}
+                                        onchange={handleUploadRequestUserSelect}
+                                        class="slds-m-bottom_small">
+                                    </lightning-combobox>
+                                </template>
+                                <div class="slds-grid slds-gutters slds-m-bottom_small">
+                                    <div class="slds-col">
+                                        <lightning-input
+                                            label="担当者 姓"
+                                            value={uploadRequestLastName}
+                                            onchange={handleUrLastNameChange}
+                                            placeholder="山田"
+                                            disabled={isUploadRequestUserSelected}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col">
+                                        <lightning-input
+                                            label="担当者 名"
+                                            value={uploadRequestFirstName}
+                                            onchange={handleUrFirstNameChange}
+                                            placeholder="太郎"
+                                            disabled={isUploadRequestUserSelected}>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                                <lightning-input
+                                    label="担当者メールアドレス"
+                                    type="email"
+                                    value={uploadRequestEmail}
+                                    onchange={handleUrEmailChange}
+                                    class="slds-m-bottom_small"
+                                    placeholder="example@email.com"
+                                    disabled={isUploadRequestUserSelected}>
+                                </lightning-input>
+
+                                <lightning-button
+                                    label="リクエストを作成"
+                                    variant="brand"
+                                    onclick={handleCreateUploadRequest}
+                                    disabled={isLoading}>
+                                </lightning-button>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+            </lightning-tabset>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,244 @@
+<template>
+    <lightning-card title="DocuSign Navigator 文書検索" icon-name="standard:document">
+
+        <!-- Search Form -->
+        <div class="slds-p-around_medium">
+            <div class="slds-grid slds-wrap slds-gutters">
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="取引先名"
+                        value={partyName}
+                        placeholder="例: 虎ノ門株式会社"
+                        onchange={handleInputChange}
+                        data-field="partyName">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-combobox
+                        label="ステータス"
+                        value={status}
+                        options={statusOptions}
+                        onchange={handleInputChange}
+                        data-field="status">
+                    </lightning-combobox>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="文書種別"
+                        value={documentType}
+                        placeholder="例: Non-disclosure Agreement"
+                        onchange={handleInputChange}
+                        data-field="documentType">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="タイトル"
+                        value={title}
+                        placeholder="文書タイトルで絞り込む"
+                        onchange={handleInputChange}
+                        data-field="title">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="date"
+                        label="満了日（開始）"
+                        value={expirationDateFrom}
+                        onchange={handleInputChange}
+                        data-field="expirationDateFrom">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="date"
+                        label="満了日（終了）"
+                        value={expirationDateTo}
+                        onchange={handleInputChange}
+                        data-field="expirationDateTo">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="date"
+                        label="有効日（開始）"
+                        value={effectiveDateFrom}
+                        onchange={handleInputChange}
+                        data-field="effectiveDateFrom">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="date"
+                        label="有効日（終了）"
+                        value={effectiveDateTo}
+                        onchange={handleInputChange}
+                        data-field="effectiveDateTo">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="number"
+                        label="最大件数"
+                        value={maxResults}
+                        min="1"
+                        max="100"
+                        onchange={handleInputChange}
+                        data-field="maxResults">
+                    </lightning-input>
+                </div>
+
+            </div>
+
+            <div class="slds-m-top_medium">
+                <lightning-button
+                    variant="brand"
+                    label="検索"
+                    onclick={handleSearch}
+                    disabled={isLoading}>
+                </lightning-button>
+                <lightning-button
+                    variant="neutral"
+                    label="クリア"
+                    onclick={handleClear}
+                    class="slds-m-left_small"
+                    disabled={isLoading}>
+                </lightning-button>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template lwc:if={isLoading}>
+            <div class="slds-p-around_medium slds-align_absolute-center">
+                <lightning-spinner alternative-text="読み込み中" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template lwc:if={errorMessage}>
+            <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                    <span class="slds-assistive-text">エラー</span>
+                    <span>{errorMessage}</span>
+                </div>
+            </div>
+        </template>
+
+        <!-- Results Table -->
+        <template lwc:if={hasResults}>
+            <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                <p class="slds-text-body_small slds-m-bottom_small">{resultSummary}</p>
+                <lightning-datatable
+                    data={tableRows}
+                    columns={columns}
+                    key-field="id"
+                    onrowaction={handleRowAction}
+                    hide-checkbox-column>
+                </lightning-datatable>
+            </div>
+        </template>
+
+        <!-- No Results -->
+        <template lwc:if={showNoResults}>
+            <div class="slds-p-around_medium slds-align_absolute-center">
+                <p class="slds-text-body_regular slds-text-color_weak">条件に一致する文書は見つかりませんでした。</p>
+            </div>
+        </template>
+
+    </lightning-card>
+
+    <!-- Detail Panel -->
+    <template lwc:if={selectedAgreement}>
+        <lightning-card title="文書詳細" icon-name="standard:file" class="slds-m-top_medium">
+            <div class="slds-p-around_medium">
+
+                <!-- Header info -->
+                <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
+                    <template for:each={detailTopFields} for:item="field">
+                        <div key={field.label} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                            <div class="slds-form-element">
+                                <span class="slds-form-element__label slds-text-color_weak">{field.label}</span>
+                                <div class="slds-form-element__control">
+                                    <span class="slds-form-element__static">{field.value}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Parties -->
+                <template lwc:if={detailParties.length}>
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">当事者</h3>
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-m-bottom_medium">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col"><div class="slds-truncate">名称</div></th>
+                                <th scope="col"><div class="slds-truncate">役割</div></th>
+                                <th scope="col"><div class="slds-truncate">種別</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={detailParties} for:item="party">
+                                <tr key={party.name}>
+                                    <td>{party.name}</td>
+                                    <td>{party.role}</td>
+                                    <td>{party.type}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+
+                <!-- Provisions -->
+                <template lwc:if={detailProvisions.length}>
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">主要条項</h3>
+                    <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
+                        <template for:each={detailProvisions} for:item="prov">
+                            <div key={prov.label} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <div class="slds-form-element">
+                                    <span class="slds-form-element__label slds-text-color_weak">{prov.label}</span>
+                                    <div class="slds-form-element__control">
+                                        <span class="slds-form-element__static">{prov.value}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- AI Summary -->
+                <div class="slds-m-top_medium">
+                    <lightning-button
+                        variant="neutral"
+                        label="AI要約を生成"
+                        icon-name="utility:einstein"
+                        onclick={handleGenerateSummary}
+                        disabled={isSummaryLoading}>
+                    </lightning-button>
+
+                    <template lwc:if={isSummaryLoading}>
+                        <lightning-spinner alternative-text="要約生成中" size="small" class="slds-m-left_small"></lightning-spinner>
+                    </template>
+
+                    <template lwc:if={summary}>
+                        <div class="summary-box slds-m-top_small">
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_xx-small">AI要約</p>
+                            <p class="slds-text-body_regular">{summary}</p>
+                        </div>
+                    </template>
+                </div>
+
+            </div>
+        </lightning-card>
+    </template>
+
+</template>

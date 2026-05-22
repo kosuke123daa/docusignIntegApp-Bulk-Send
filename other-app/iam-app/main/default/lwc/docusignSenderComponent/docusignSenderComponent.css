@@ -1,0 +1,32 @@
+/* DocuSign Sender Component Styles */
+
+.slds-notify_alert h2 {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.slds-notify_alert p {
+    font-size: 0.8125rem;
+    color: inherit;
+}
+
+/* ボタンのスタイル調整 */
+lightning-button {
+    margin-right: 0.5rem;
+}
+
+/* フォームのスタイル調整 */
+.slds-form-element {
+    margin-bottom: 1rem;
+}
+
+/* スピナーのオーバーレイ */
+.slds-is-relative {
+    min-height: 100px;
+}
+
+/* 成功メッセージのスタイル */
+.slds-alert_success h2 {
+    white-space: pre-line;
+}
