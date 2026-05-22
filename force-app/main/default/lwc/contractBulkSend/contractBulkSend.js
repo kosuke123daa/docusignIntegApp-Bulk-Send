@@ -25,6 +25,12 @@ const COLUMNS = [
         type: 'date',
         typeAttributes: { year: 'numeric', month: '2-digit', day: '2-digit',
                           hour: '2-digit', minute: '2-digit' }
+    },
+    {
+        label: 'エンベロープ',
+        fieldName: 'envelopeUrl',
+        type: 'url',
+        typeAttributes: { label: 'DocuSignで開く', target: '_blank' }
     }
 ];
 
@@ -52,7 +58,10 @@ export default class ContractBulkSend extends LightningElement {
 
     _addStatusClass(row) {
         return Object.assign({}, row, {
-            statusClass: this._calcStatusClass(row.envelopeStatus)
+            statusClass:  this._calcStatusClass(row.envelopeStatus),
+            envelopeUrl:  row.envelopeId
+                ? `https://app.docusign.com/documents/details/${row.envelopeId}`
+                : null
         });
     }
 
@@ -114,7 +123,8 @@ export default class ContractBulkSend extends LightningElement {
         this.tableData = this._rawData.map(row => {
             const updated = Object.assign({}, row, {
                 envelopeStatus:   '未送信',
-                envelopeSentDate: null
+                envelopeSentDate: null,
+                envelopeId:       null
             });
             return this._addStatusClass(updated);
         });
@@ -145,7 +155,8 @@ export default class ContractBulkSend extends LightningElement {
                 const st = statusMap[row.Id];
                 const updated = Object.assign({}, row, {
                     envelopeStatus:   st ? st.envelopeStatus : (row.envelopeStatus || '未送信'),
-                    envelopeSentDate: st ? st.sentDate       : row.envelopeSentDate
+                    envelopeSentDate: st ? st.sentDate       : row.envelopeSentDate,
+                    envelopeId:       st ? st.envelopeId     : row.envelopeId
                 });
                 return this._addStatusClass(updated);
             });

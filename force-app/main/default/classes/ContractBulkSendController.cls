@@ -53,6 +53,7 @@ public with sharing class ContractBulkSendController {
             dfsle.Envelope.Status st = latestStatusMap.get(c.Id);
             w.envelopeStatus = st != null ? st.status : '未送信';
             w.envelopeSentDate = st != null ? st.sent : null;
+            w.envelopeId = st != null && st.docuSignId != null ? String.valueOf(st.docuSignId) : null;
 
             wrappers.add(w);
         }
@@ -182,6 +183,7 @@ public with sharing class ContractBulkSendController {
         @AuraEnabled public String billingAddress  { get; set; }
         @AuraEnabled public String envelopeStatus  { get; set; }
         @AuraEnabled public Datetime envelopeSentDate { get; set; }
+        @AuraEnabled public String envelopeId      { get; set; }
     }
 
     public class SendResult {
