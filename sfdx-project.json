@@ -5,7 +5,7 @@
             "default": true
         },
         {
-            "path": "other-app/iam-app"
+            "path": "iam-app"
         }
     ],
     "name": "docusignIntegApp-Bulk-Send",
