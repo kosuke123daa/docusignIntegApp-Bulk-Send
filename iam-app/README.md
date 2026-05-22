@@ -160,14 +160,28 @@ Salesforce Apex
 | Account ID | DocuSignアカウントID（GUID形式） |
 | Auth Server | `https://account-d.docusign.com`（本番は `https://account.docusign.com`） |
 
-### 2. 指定ログイン情報の設定
+### 2. 外部ログイン情報の設定
 
-`DocuSign_Navigator` という名前の指定ログイン情報を作成：
+設定 → 外部ログイン情報 → 新規作成：
 
-- **URL**: `https://api-d.docusign.com`
-- **認証**: `No Authentication`（Bearerトークンはコード側で付与）
+| 項目 | 値 |
+|---|---|
+| 表示ラベル | DocuSign_Navigator_EC |
+| 名前 | DocuSign_Navigator_EC |
+| 認証プロトコル | カスタム |
 
-### 3. デプロイ
+### 3. 指定ログイン情報の設定
+
+設定 → 指定ログイン情報 → 新規作成：
+
+| 項目 | 値 |
+|---|---|
+| 表示ラベル | DocuSign_Navigator |
+| 名前 | DocuSign_Navigator |
+| URL | `https://api-d.docusign.com` |
+| 認証ヘッダーを生成 | チェックをはずす |
+
+### 4. デプロイ
 
 ```bash
 # 全コンポーネントをデプロイ
@@ -177,7 +191,7 @@ sf project deploy start --source-dir force-app --ignore-conflicts
 sf project deploy start --source-dir force-app/main/default/classes/WorkspaceService.cls --ignore-conflicts
 ```
 
-### 4. 商談ページへの配置
+### 5. 商談ページへの配置
 
 Lightning App Builder で商談レコードページに以下のコンポーネントを追加：
 
