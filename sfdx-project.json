@@ -3,6 +3,9 @@
         {
             "path": "force-app",
             "default": true
+        },
+        {
+            "path": "other-app/iam-app"
         }
     ],
     "name": "docusignIntegApp-Bulk-Send",
