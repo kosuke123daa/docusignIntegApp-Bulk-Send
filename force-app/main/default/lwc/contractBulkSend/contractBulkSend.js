@@ -60,7 +60,7 @@ export default class ContractBulkSend extends LightningElement {
         return Object.assign({}, row, {
             statusClass:  this._calcStatusClass(row.envelopeStatus),
             envelopeUrl:  row.envelopeId
-                ? `https://account-d.docusign.com/documents/details/${row.envelopeId}`
+                ? `https://apps-d.docusign.com/send/documents/details/${row.envelopeId}`
                 : null
         });
     }
