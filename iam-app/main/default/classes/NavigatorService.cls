@@ -22,10 +22,10 @@ public with sharing class NavigatorService {
     }
 
     public static Config loadConfig() {
-        DocuSign_JWT_Config_mdt__mdt mdt = [
+        DocuSign_JWT_Config__mdt mdt = [
             SELECT Integration_Key__c, User_Id__c, Private_Key__c,
                    Auth_Server__c, Account_Id__c
-            FROM DocuSign_JWT_Config_mdt__mdt
+            FROM DocuSign_JWT_Config__mdt
             WHERE DeveloperName = 'Default'
             LIMIT 1
         ];
