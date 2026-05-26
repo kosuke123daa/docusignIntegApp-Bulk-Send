@@ -14,6 +14,7 @@ import createEnvelope        from '@salesforce/apex/WorkspaceController.createEn
 import getWorkspaceEnvelopes      from '@salesforce/apex/WorkspaceController.getWorkspaceEnvelopes';
 import getWorkspaceUploadRequests from '@salesforce/apex/WorkspaceController.getWorkspaceUploadRequests';
 import createUploadRequest        from '@salesforce/apex/WorkspaceController.createUploadRequest';
+import saveWorkspaceId            from '@salesforce/apex/WorkspaceController.saveWorkspaceId';
 
 const FILE_ICON_MAP = {
     pdf:  'doctype:pdf',
@@ -33,9 +34,10 @@ export default class WorkspaceManager extends LightningElement {
     @track activeTab        = 'workspace';
 
     // Workspace
-    @track workspaceId      = '';
-    @track workspaceName    = '';
-    @track newWorkspaceName = '';
+    @track workspaceId         = '';
+    @track workspaceName       = '';
+    @track newWorkspaceName    = '';
+    @track connectWorkspaceId  = '';
 
     // Documents
     @track opportunityFiles      = [];
@@ -143,6 +145,35 @@ export default class WorkspaceManager extends LightningElement {
 
     handleWorkspaceNameChange(evt) {
         this.newWorkspaceName = evt.target.value;
+    }
+
+    handleConnectWorkspaceIdChange(evt) {
+        this.connectWorkspaceId = evt.target.value;
+    }
+
+    async handleConnectWorkspace() {
+        if (!this.connectWorkspaceId.trim()) {
+            this._setError('ワークスペースIDを入力してください。');
+            return;
+        }
+        this.isLoading = true;
+        this._clearMessages();
+        try {
+            const info = await saveWorkspaceId({
+                opportunityId: this.recordId,
+                workspaceId:   this.connectWorkspaceId.trim()
+            });
+            this.workspaceId   = this.connectWorkspaceId.trim();
+            this.workspaceName = info.name || '';
+            this.connectWorkspaceId = '';
+            this._setSuccess('ワークスペースに接続しました。');
+            await this._loadWorkspaceData();
+            await this._loadOpportunityData();
+        } catch (e) {
+            this._setError(e);
+        } finally {
+            this.isLoading = false;
+        }
     }
 
     async handleCreateWorkspace() {

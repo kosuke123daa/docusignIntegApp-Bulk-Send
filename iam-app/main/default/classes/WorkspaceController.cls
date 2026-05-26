@@ -32,6 +32,18 @@ public with sharing class WorkspaceController {
         return opp.DocuSign_Workspace_Id__c;
     }
 
+    // ── 既存ワークスペースIDを商談に保存 ──────────────────────────────────────
+
+    @AuraEnabled(cacheable=false)
+    public static Map<String, Object> saveWorkspaceId(String opportunityId, String workspaceId) {
+        Map<String, Object> info = WorkspaceService.getWorkspace(workspaceId);
+        if (String.isNotBlank(opportunityId)) {
+            Opportunity opp = new Opportunity(Id = opportunityId, DocuSign_Workspace_Id__c = workspaceId);
+            update opp;
+        }
+        return info;
+    }
+
     // ── 商談添付ファイル一覧取得 ──────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)

@@ -62,6 +62,27 @@
                                 onclick={handleCreateWorkspace}
                                 disabled={isLoading}>
                             </lightning-button>
+
+                            <div class="slds-m-vertical_medium slds-border_bottom"></div>
+                            <p class="slds-text-title slds-m-bottom_small">既存のワークスペースに接続</p>
+                            <div class="slds-grid slds-gutters slds-grid_vertical-align-end">
+                                <div class="slds-col slds-grow">
+                                    <lightning-input
+                                        label="ワークスペースID"
+                                        value={connectWorkspaceId}
+                                        onchange={handleConnectWorkspaceIdChange}
+                                        placeholder="例: 1997384">
+                                    </lightning-input>
+                                </div>
+                                <div class="slds-col slds-no-flex">
+                                    <lightning-button
+                                        label="接続"
+                                        variant="neutral"
+                                        onclick={handleConnectWorkspace}
+                                        disabled={isLoading}>
+                                    </lightning-button>
+                                </div>
+                            </div>
                         </template>
 
                         <template if:true={workspaceId}>
