@@ -160,45 +160,23 @@ Salesforce Apex
 | Account ID | DocuSignアカウントID（GUID形式） |
 | Auth Server | `https://account-d.docusign.com`（本番は `https://account.docusign.com`） |
 
-### 2. 外部ログイン情報の設定
+### 2. 外部ログイン情報・指定ログイン情報・権限セットのデプロイ
 
-設定 → 外部ログイン情報 → 新規作成：
+以下のメタデータはソースに含まれているため、デプロイするだけで自動作成されます：
 
-| 項目 | 値 |
-|---|---|
-| 表示ラベル | DocuSign_Navigator_EC |
-| 名前 | DocuSign_Navigator_EC |
-| 認証プロトコル | カスタム |
+- 外部ログイン情報：`DocuSign_Navigator_EC`（認証プロトコル：カスタム）
+- 指定ログイン情報：`DocuSign_Navigator`（URL：`https://api-d.docusign.com`）
+- 権限セット：`DocuSign Navigator Access`
 
-作成後、以下の手順でプリンシパルの追加と権限セットの設定を行う：
+**デプロイ後の手動作業（1回のみ）：**
 
-**① プリンシパルを追加する**
+使用するユーザーに権限セットを割り当てる：
 
-1. 外部ログイン情報 `DocuSign_Navigator_EC` を開く
-2. 「プリンシパル」セクション → 「新規」
-3. パラメーター名・連番を入力して保存（認証パラメーターの設定は不要）
-
-**② 権限セットを作成して外部ログイン情報を有効化する**
-
-1. 設定 → 権限セット → 「新規」
-2. 表示ラベル：`DocuSign Navigator Access`、保存
-3. 作成した権限セットを開き、「有効な外部ログイン情報プリンシパル設定」をクリック
-4. 「編集」→ `DocuSign_Navigator_EC` のプリンシパルを有効化して保存
-5. 権限セットの「管理」→「ユーザの割り当て」から、使用するユーザーに権限セットを割り当てる
+1. 設定 → 権限セット → `DocuSign Navigator Access` を開く
+2. 「管理」→「ユーザの割り当て」→「割り当ての編集」
+3. 使用するユーザーにチェックを入れて保存
 
 > **注意:** この設定が漏れると `We couldn't access the credential(s)` エラーが発生します。
-
-### 3. 指定ログイン情報の設定
-
-設定 → 指定ログイン情報 → 新規作成：
-
-| 項目 | 値 |
-|---|---|
-| 表示ラベル | DocuSign_Navigator |
-| 名前 | DocuSign_Navigator |
-| URL | `https://api-d.docusign.com` |
-| 外部ログイン情報 | DocuSign_Navigator_EC |
-| 認証ヘッダーを生成 | チェックをはずす |
 
 ### 4. DocuSign コンセント（JWT認証の事前同意）
 
