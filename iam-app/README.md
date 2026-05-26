@@ -160,25 +160,11 @@ Salesforce Apex
 | Account ID | DocuSignアカウントID（GUID形式） |
 | Auth Server | `https://account-d.docusign.com`（本番は `https://account.docusign.com`） |
 
-### 2. 外部ログイン情報・指定ログイン情報・権限セットのデプロイ
+### 2. 指定ログイン情報のデプロイ
 
-以下のメタデータはソースに含まれているため、デプロイするだけで自動作成されます：
+指定ログイン情報（`DocuSign_Navigator`）はソースに含まれているため、デプロイするだけで自動作成されます。手動設定は不要です。
 
-- 外部ログイン情報：`DocuSign_Navigator_EC`（認証プロトコル：カスタム）
-- 指定ログイン情報：`DocuSign_Navigator`（URL：`https://api-d.docusign.com`）
-- 権限セット：`DocuSign Navigator Access`
-
-**デプロイ後の手動作業（1回のみ）：**
-
-使用するユーザーに権限セットを割り当てる：
-
-1. 設定 → 権限セット → `DocuSign Navigator Access` を開く
-2. 「管理」→「ユーザの割り当て」→「割り当ての編集」
-3. 使用するユーザーにチェックを入れて保存
-
-> **注意:** この設定が漏れると `We couldn't access the credential(s)` エラーが発生します。
-
-### 4. DocuSign コンセント（JWT認証の事前同意）
+### 3. DocuSign コンセント（JWT認証の事前同意）
 
 JWT認証でImpersonationを使用するため、DocuSign側でユーザーの同意が必要です。**以下のURLをブラウザで開き、DocuSignアカウントでログインして承認**してください：
 
