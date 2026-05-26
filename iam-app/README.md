@@ -170,6 +170,15 @@ Salesforce Apex
 | 名前 | DocuSign_Navigator_EC |
 | 認証プロトコル | カスタム |
 
+作成後、**外部ログイン情報のプリンシパルを追加**し、使用するユーザー・プロファイルに権限を付与する：
+
+1. 外部ログイン情報 `DocuSign_Navigator_EC` を開く
+2. 「プリンシパル」セクション → 「新規」
+3. 権限セット or プロファイルに紐付けて保存
+4. 対象ユーザーが属する権限セットに `DocuSign_Navigator_EC` の「使用」権限を付与
+
+> **注意:** この設定が漏れると `We couldn't access the credential(s)` エラーが発生します。
+
 ### 3. 指定ログイン情報の設定
 
 設定 → 指定ログイン情報 → 新規作成：
@@ -179,7 +188,25 @@ Salesforce Apex
 | 表示ラベル | DocuSign_Navigator |
 | 名前 | DocuSign_Navigator |
 | URL | `https://api-d.docusign.com` |
+| 外部ログイン情報 | DocuSign_Navigator_EC |
 | 認証ヘッダーを生成 | チェックをはずす |
+
+### 4. DocuSign コンセント（JWT認証の事前同意）
+
+JWT認証でImpersonationを使用するため、DocuSign側でユーザーの同意が必要です。**以下のURLをブラウザで開き、DocuSignアカウントでログインして承認**してください：
+
+```
+https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20adm_store_unified_repo_read%20dtr.rooms.write%20dtr.rooms.read%20dtr.company.read%20dtr.documents.write%20dtr.documents.read&client_id=YOUR_INTEGRATION_KEY&redirect_uri=https://www.docusign.com
+```
+
+`YOUR_INTEGRATION_KEY` をカスタムメタデータに設定したIntegration Keyに置き換えてください。
+
+**重要:** 承認後にDocuSignのトップページにリダイレクトされれば成功です。
+
+**注意事項:**
+- `signature` スコープのみでコンセントした場合、残りのスコープが未承認となり `consent_required` エラーが発生します
+- コンセントはIntegration Keyとユーザー（User ID）の組み合わせに紐づくため、User IDを変更した場合は再度コンセントが必要です
+- コンセントはDocuSignのデモ環境（`account-d.docusign.com`）と本番環境で別々に必要です
 
 ### 4. デプロイ
 
