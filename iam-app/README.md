@@ -160,11 +160,7 @@ Salesforce Apex
 | Account ID | DocuSignアカウントID（GUID形式） |
 | Auth Server | `https://account-d.docusign.com`（本番は `https://account.docusign.com`） |
 
-### 2. 指定ログイン情報のデプロイ
-
-指定ログイン情報（`DocuSign_Navigator`）はソースに含まれているため、デプロイするだけで自動作成されます。手動設定は不要です。
-
-### 3. DocuSign コンセント（JWT認証の事前同意）
+### 2. DocuSign コンセント（JWT認証の事前同意）
 
 JWT認証でImpersonationを使用するため、DocuSign側でユーザーの同意が必要です。**以下のURLをブラウザで開き、DocuSignアカウントでログインして承認**してください：
 
