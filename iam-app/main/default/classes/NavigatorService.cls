@@ -101,7 +101,6 @@ public with sharing class NavigatorService {
         List<String> filters = new List<String>();
         if (p != null) {
             if (String.isNotBlank(p.status))              filters.add('status eq \'' + p.status + '\'');
-            if (String.isNotBlank(p.partyName))           filters.add('parties/name_in_agreement eq \'' + p.partyName + '\'');
             if (String.isNotBlank(p.documentType))        filters.add('type eq \'' + p.documentType + '\'');
             if (String.isNotBlank(p.title))               filters.add('title eq \'' + p.title + '\'');
             if (String.isNotBlank(p.expirationDateFrom))  filters.add('provisions/expiration_date ge ' + p.expirationDateFrom);
@@ -109,6 +108,8 @@ public with sharing class NavigatorService {
             if (String.isNotBlank(p.effectiveDateFrom))   filters.add('provisions/effective_date ge ' + p.effectiveDateFrom);
             if (String.isNotBlank(p.effectiveDateTo))     filters.add('provisions/effective_date le ' + p.effectiveDateTo);
             if (String.isNotBlank(p.sourceName))          filters.add('source_name eq \'' + p.sourceName + '\'');
+            // parties は $filter OData式では非対応のため直接クエリパラメーターとして渡す
+            if (String.isNotBlank(p.partyName))           params.add('parties.name_in_agreement=' + EncodingUtil.urlEncode(p.partyName, 'UTF-8'));
         }
         if (!filters.isEmpty()) {
             params.add('$filter=' + EncodingUtil.urlEncode(String.join(filters, ' and '), 'UTF-8'));
