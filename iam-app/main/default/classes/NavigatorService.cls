@@ -101,7 +101,7 @@ public with sharing class NavigatorService {
         List<String> filters = new List<String>();
         if (p != null) {
             if (String.isNotBlank(p.status))              filters.add('status eq \'' + p.status + '\'');
-            if (String.isNotBlank(p.partyName))           filters.add('parties/any(p: p/name_in_agreement eq \'' + p.partyName + '\')');
+            if (String.isNotBlank(p.partyName))           filters.add('parties/name_in_agreement eq \'' + p.partyName + '\'');
             if (String.isNotBlank(p.documentType))        filters.add('type eq \'' + p.documentType + '\'');
             if (String.isNotBlank(p.title))               filters.add('title eq \'' + p.title + '\'');
             if (String.isNotBlank(p.expirationDateFrom))  filters.add('provisions/expiration_date ge ' + p.expirationDateFrom);
