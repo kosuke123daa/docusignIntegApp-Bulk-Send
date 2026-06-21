@@ -2,6 +2,7 @@ import { LightningElement, track } from 'lwc';
 import searchAgreements from '@salesforce/apex/NavigatorController.searchAgreements';
 import getAgreementDetail from '@salesforce/apex/NavigatorController.getAgreementDetail';
 import generateSummary from '@salesforce/apex/NavigatorController.generateSummary';
+import uploadDocument from '@salesforce/apex/NavigatorController.uploadDocument';
 
 const COLUMNS = [
     { label: 'タイトル',   fieldName: 'title',          type: 'text', wrapText: true },
@@ -68,7 +69,15 @@ export default class NavigatorExplorer extends LightningElement {
     columns       = COLUMNS;
     statusOptions = STATUS_OPTIONS;
 
+    // Upload state
+    selectedFile          = null;
+    isUploading            = false;
+    uploadSuccessMessage   = '';
+    uploadErrorMessage     = '';
+
     // ── Getters ───────────────────────────────────────────────────────────────
+
+    get isUploadButtonDisabled() { return !this.selectedFile || this.isUploading; }
 
     get hasResults()    { return this.tableRows.length > 0; }
     get showNoResults() { return this.searched && !this.isLoading && this.tableRows.length === 0 && !this.errorMessage; }
@@ -102,6 +111,46 @@ export default class NavigatorExplorer extends LightningElement {
         return PROVISION_LABELS
             .filter(f => prov[f.key] != null && prov[f.key] !== '')
             .map(f    => ({ label: f.label, value: String(prov[f.key]) }));
+    }
+
+    // ── Upload handlers ──────────────────────────────────────────────────────
+
+    handleFileSelect(event) {
+        this.selectedFile        = event.target.files[0] || null;
+        this.uploadSuccessMessage = '';
+        this.uploadErrorMessage   = '';
+    }
+
+    async handleUpload() {
+        if (!this.selectedFile) return;
+
+        this.isUploading          = true;
+        this.uploadSuccessMessage = '';
+        this.uploadErrorMessage   = '';
+
+        try {
+            const base64Data = await this._readFileAsBase64(this.selectedFile);
+            const jobId = await uploadDocument({
+                base64Data,
+                fileName:    this.selectedFile.name,
+                contentType: this.selectedFile.type || 'application/pdf'
+            });
+            this.uploadSuccessMessage = `アップロードが完了しました。ジョブID: ${jobId}`;
+            this.selectedFile = null;
+        } catch (e) {
+            this.uploadErrorMessage = this._extractError(e);
+        } finally {
+            this.isUploading = false;
+        }
+    }
+
+    _readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
     }
 
     // ── Event handlers ────────────────────────────────────────────────────────

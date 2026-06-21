@@ -2,8 +2,8 @@
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>60.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Navigator 文書エクスプローラー</masterLabel>
-    <description>DocuSign Navigator APIと連携して合意文書を検索・閲覧するコンポーネント</description>
+    <masterLabel>Agreement Manager 文書エクスプローラー</masterLabel>
+    <description>DocuSign Agreement Manager（Navigator）APIと連携して合意文書を検索・閲覧・アップロードするコンポーネント</description>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>

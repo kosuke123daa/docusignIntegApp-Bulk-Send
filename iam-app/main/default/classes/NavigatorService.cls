@@ -94,6 +94,53 @@ public with sharing class NavigatorService {
         return 'callout:DocuSign_Navigator/v1/accounts/' + accountId + '/agreements';
     }
 
+    public static String getUploadJobsBaseUrl(String accountId) {
+        return 'callout:DocuSign_Navigator/v1/accounts/' + accountId + '/upload/jobs';
+    }
+
+    // ── Bulk Upload Job (Data In) ────────────────────────────────────────────
+
+    public static Map<String, Object> createBulkUploadJob(Config cfg, String accessToken) {
+        String body = JSON.serialize(new Map<String, Object>{ 'expected_document_count' => 1 });
+        HttpResponse res = callPost(getUploadJobsBaseUrl(cfg.accountId), accessToken, body);
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            throw new CalloutException('アップロードジョブ作成失敗: HTTP ' + res.getStatusCode() + ' ' + res.getBody());
+        }
+        return (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+    }
+
+    public static String extractUploadDocumentUrl(Map<String, Object> job) {
+        Map<String, Object> embedded = (Map<String, Object>) job.get('_embedded');
+        List<Object> documents       = (List<Object>) embedded.get('documents');
+        Map<String, Object> doc      = (Map<String, Object>) documents.get(0);
+        Map<String, Object> actions  = (Map<String, Object>) doc.get('_actions');
+        return (String) actions.get('upload_document');
+    }
+
+    public static void uploadDocumentToBlob(String uploadUrl, Blob fileData, String fileName, String contentType) {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(uploadUrl);
+        req.setMethod('PUT');
+        req.setHeader('x-ms-blob-type', 'BlockBlob');
+        req.setHeader('x-ms-meta-filename', EncodingUtil.urlEncode(fileName, 'UTF-8'));
+        req.setHeader('Content-Type', contentType);
+        req.setBodyAsBlob(fileData);
+        req.setTimeout(120000);
+
+        HttpResponse res = new Http().send(req);
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            throw new CalloutException('Blobアップロード失敗: HTTP ' + res.getStatusCode() + ' ' + res.getBody());
+        }
+    }
+
+    public static void completeBulkJob(Config cfg, String accessToken, String jobId) {
+        String url = getUploadJobsBaseUrl(cfg.accountId) + '/' + jobId + '/actions/complete';
+        HttpResponse res = callPost(url, accessToken, '{}');
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            throw new CalloutException('アップロードジョブ完了処理失敗: HTTP ' + res.getStatusCode() + ' ' + res.getBody());
+        }
+    }
+
     public static String buildListUrl(String baseUrl, ListParams p) {
         Integer maxRes = (p != null && p.maxResults != null) ? p.maxResults : 20;
         List<String> params = new List<String>{ 'limit=' + maxRes };

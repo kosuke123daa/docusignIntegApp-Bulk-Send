@@ -33,7 +33,7 @@ public with sharing class NavigatorController {
             HttpResponse res = NavigatorService.callGet(NavigatorService.buildListUrl(baseUrl, lp), accessToken);
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
                 throw new AuraHandledException(
-                    'Navigator API エラー: HTTP ' + res.getStatusCode() + ' ' + res.getBody()
+                    'Agreement Manager API エラー: HTTP ' + res.getStatusCode() + ' ' + res.getBody()
                 );
             }
             return res.getBody();
@@ -54,7 +54,7 @@ public with sharing class NavigatorController {
             HttpResponse res = NavigatorService.callGet(baseUrl + '/' + agreementId, accessToken);
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
                 throw new AuraHandledException(
-                    'Navigator API エラー: HTTP ' + res.getStatusCode() + ' ' + res.getBody()
+                    'Agreement Manager API エラー: HTTP ' + res.getStatusCode() + ' ' + res.getBody()
                 );
             }
             return res.getBody();
@@ -83,6 +83,26 @@ public with sharing class NavigatorController {
             return res.getBody();
         } catch (AuraHandledException e) {
             throw e;
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
+    @AuraEnabled(cacheable=false)
+    public static String uploadDocument(String base64Data, String fileName, String contentType) {
+        try {
+            NavigatorService.Config cfg = NavigatorService.loadConfig();
+            String accessToken          = NavigatorService.getAccessToken(cfg);
+
+            Map<String, Object> job = NavigatorService.createBulkUploadJob(cfg, accessToken);
+            String jobId            = (String) job.get('id');
+            String uploadUrl        = NavigatorService.extractUploadDocumentUrl(job);
+
+            Blob fileData = EncodingUtil.base64Decode(base64Data);
+            NavigatorService.uploadDocumentToBlob(uploadUrl, fileData, fileName, contentType);
+            NavigatorService.completeBulkJob(cfg, accessToken, jobId);
+
+            return jobId;
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
