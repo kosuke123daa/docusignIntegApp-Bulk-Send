@@ -124,7 +124,7 @@ export default class NavigatorExplorer extends LightningElement {
     _flattenAgreements(rawList) {
         return rawList.map(doc => ({
             id:                   doc.id    || '',
-            title:                doc.title || doc.file_name || '（タイトルなし）',
+            title:                doc.file_name || doc.title || '（タイトルなし）',
             agreementUrl:         doc.id ? (AGREEMENT_MANAGER_BASE_URL + doc.id) : '',
             type:                 doc.type         || '',
             category:             doc.category     || '',
