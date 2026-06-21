@@ -1,51 +1,5 @@
 <template>
-    <lightning-card title="DocuSign Agreement Manager 文書検索" icon-name="standard:document">
-
-        <!-- Upload Form -->
-        <div class="slds-p-around_medium slds-border_bottom">
-            <h3 class="slds-text-heading_small slds-m-bottom_small">PDFをAgreement Managerにアップロード</h3>
-            <div class="slds-grid slds-wrap slds-gutters slds-grid_vertical-align-end">
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
-                    <input
-                        type="file"
-                        accept=".pdf"
-                        onchange={handleFileSelect}
-                        disabled={isUploading}>
-                </div>
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                    <lightning-button
-                        variant="brand"
-                        label="アップロード"
-                        onclick={handleUpload}
-                        disabled={isUploadButtonDisabled}>
-                    </lightning-button>
-                </div>
-            </div>
-
-            <template lwc:if={isUploading}>
-                <div class="slds-p-top_small">
-                    <lightning-spinner alternative-text="アップロード中" size="small"></lightning-spinner>
-                </div>
-            </template>
-
-            <template lwc:if={uploadSuccessMessage}>
-                <div class="slds-p-top_small">
-                    <div class="slds-notify slds-notify_alert slds-alert_success" role="alert">
-                        <span class="slds-assistive-text">成功</span>
-                        <span>{uploadSuccessMessage}</span>
-                    </div>
-                </div>
-            </template>
-
-            <template lwc:if={uploadErrorMessage}>
-                <div class="slds-p-top_small">
-                    <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
-                        <span class="slds-assistive-text">エラー</span>
-                        <span>{uploadErrorMessage}</span>
-                    </div>
-                </div>
-            </template>
-        </div>
+    <lightning-card title="DocuSign Navigator 文書検索" icon-name="standard:document">
 
         <!-- Search Form -->
         <div class="slds-p-around_medium">
