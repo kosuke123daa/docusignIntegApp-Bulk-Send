@@ -141,7 +141,6 @@
                     data={tableRows}
                     columns={columns}
                     key-field="id"
-                    onrowaction={handleRowAction}
                     hide-checkbox-column>
                 </lightning-datatable>
             </div>
@@ -155,108 +154,5 @@
         </template>
 
     </lightning-card>
-
-    <!-- Detail Panel -->
-    <template lwc:if={selectedAgreement}>
-        <lightning-card title="文書詳細" icon-name="standard:file" class="slds-m-top_medium">
-            <div class="slds-p-around_medium">
-
-                <!-- Header info -->
-                <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
-                    <template for:each={detailTopFields} for:item="field">
-                        <div key={field.label} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                            <div class="slds-form-element">
-                                <span class="slds-form-element__label slds-text-color_weak">{field.label}</span>
-                                <div class="slds-form-element__control">
-                                    <span class="slds-form-element__static">{field.value}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Parties -->
-                <template lwc:if={detailParties.length}>
-                    <h3 class="slds-text-heading_small slds-m-bottom_small">当事者</h3>
-                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-m-bottom_medium">
-                        <thead>
-                            <tr class="slds-line-height_reset">
-                                <th scope="col"><div class="slds-truncate">名称</div></th>
-                                <th scope="col"><div class="slds-truncate">役割</div></th>
-                                <th scope="col"><div class="slds-truncate">種別</div></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template for:each={detailParties} for:item="party">
-                                <tr key={party.name}>
-                                    <td>{party.name}</td>
-                                    <td>{party.role}</td>
-                                    <td>{party.type}</td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </template>
-
-                <!-- Provisions -->
-                <template lwc:if={detailProvisions.length}>
-                    <h3 class="slds-text-heading_small slds-m-bottom_small">主要条項</h3>
-                    <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
-                        <template for:each={detailProvisions} for:item="prov">
-                            <div key={prov.label} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <div class="slds-form-element">
-                                    <span class="slds-form-element__label slds-text-color_weak">{prov.label}</span>
-                                    <div class="slds-form-element__control">
-                                        <span class="slds-form-element__static">{prov.value}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </template>
-
-                <!-- AI Summary -->
-                <div class="slds-m-top_medium">
-                    <lightning-button
-                        variant="neutral"
-                        label="AI要約を生成"
-                        icon-name="utility:einstein"
-                        onclick={handleGenerateSummary}
-                        disabled={isSummaryLoading}>
-                    </lightning-button>
-                    <lightning-button
-                        variant="neutral"
-                        label="生データ（JSON）を表示"
-                        icon-name="utility:code"
-                        onclick={handleToggleRawJson}
-                        class="slds-m-left_small">
-                    </lightning-button>
-                    <lightning-button
-                        variant="neutral"
-                        label="Agreement Managerで開く"
-                        icon-name="utility:new_window"
-                        onclick={handleOpenInAgreementManager}
-                        class="slds-m-left_small">
-                    </lightning-button>
-
-                    <template lwc:if={isSummaryLoading}>
-                        <lightning-spinner alternative-text="要約生成中" size="small" class="slds-m-left_small"></lightning-spinner>
-                    </template>
-
-                    <template lwc:if={summary}>
-                        <div class="summary-box slds-m-top_small">
-                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_xx-small">AI要約</p>
-                            <p class="slds-text-body_regular">{summary}</p>
-                        </div>
-                    </template>
-
-                    <template lwc:if={showRawJson}>
-                        <pre class="raw-json-box slds-m-top_small">{detailRawJson}</pre>
-                    </template>
-                </div>
-
-            </div>
-        </lightning-card>
-    </template>
 
 </template>
