@@ -212,7 +212,7 @@ export default class NavigatorExplorer extends LightningElement {
     _flattenAgreements(rawList) {
         return rawList.map(doc => ({
             id:             doc.id    || '',
-            title:          doc.title || '（タイトルなし）',
+            title:          doc.title || doc.file_name || '（タイトルなし）',
             type:           doc.type  || '',
             status:         doc.status || '',
             expirationDate: (doc.provisions && doc.provisions.expiration_date) || '',
