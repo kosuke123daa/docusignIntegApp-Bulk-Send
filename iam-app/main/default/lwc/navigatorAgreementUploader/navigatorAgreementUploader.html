@@ -1,0 +1,74 @@
+<template>
+    <lightning-card title="DocuSign Navigator アップロード" icon-name="doctype:pdf">
+
+        <template if:true={errorMessage}>
+            <div class="slds-p-around_medium">
+                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                    <span class="slds-assistive-text">エラー</span>
+                    <h2>{errorMessage}</h2>
+                </div>
+            </div>
+        </template>
+
+        <template if:true={successMessage}>
+            <div class="slds-p-around_medium">
+                <div class="slds-notify slds-notify_alert slds-alert_success" role="alert">
+                    <span class="slds-assistive-text">成功</span>
+                    <h2>{successMessage}</h2>
+                </div>
+            </div>
+        </template>
+
+        <template if:false={hasFiles}>
+            <div class="slds-p-around_medium">
+                <div class="slds-notify slds-notify_alert slds-alert_warning" role="alert">
+                    <span class="slds-assistive-text">警告</span>
+                    <h2>このレコードに添付ファイルがありません。</h2>
+                    <p class="slds-m-top_small">ファイルタブからファイルをアップロードしてください。</p>
+                </div>
+            </div>
+        </template>
+
+        <template if:true={hasFiles}>
+            <div class="slds-p-around_medium">
+
+                <div class="slds-form-element">
+                    <lightning-combobox
+                        label="Navigatorにアップロードするファイルを選択"
+                        value={selectedDocumentId}
+                        options={fileOptions}
+                        onchange={handleFileChange}
+                        placeholder="ファイルを選択してください"
+                        required
+                        disabled={isLoading}
+                    ></lightning-combobox>
+                </div>
+
+                <div class="slds-m-top_large">
+                    <lightning-button
+                        variant="brand"
+                        label="Navigatorへアップロード"
+                        icon-name="utility:upload"
+                        onclick={handleUpload}
+                        disabled={isButtonDisabled}
+                        class="slds-m-right_small"
+                    ></lightning-button>
+
+                    <lightning-button
+                        label="キャンセル"
+                        onclick={handleCancel}
+                        disabled={isLoading}
+                    ></lightning-button>
+                </div>
+
+            </div>
+        </template>
+
+        <template if:true={isLoading}>
+            <div class="slds-is-relative slds-m-around_medium">
+                <lightning-spinner alternative-text="アップロード中..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+    </lightning-card>
+</template>
