@@ -5,7 +5,7 @@ public with sharing class NavigatorController {
         String partyName,
         String status,
         String documentType,
-        String title,
+        String fileName,
         String expirationDateFrom,
         String expirationDateTo,
         String effectiveDateFrom,
@@ -23,7 +23,7 @@ public with sharing class NavigatorController {
 
             Integer wantedResults = (maxResults != null) ? maxResults : 20;
             Boolean hasTextFilter = String.isNotBlank(partyName) || String.isNotBlank(documentType)
-                || String.isNotBlank(title) || String.isNotBlank(sourceName)
+                || String.isNotBlank(fileName) || String.isNotBlank(sourceName)
                 || String.isNotBlank(category) || String.isNotBlank(reviewStatus)
                 || String.isNotBlank(language);
 
@@ -55,7 +55,7 @@ public with sharing class NavigatorController {
             if (rawList != null) {
                 for (Object o : rawList) {
                     Map<String, Object> doc = (Map<String, Object>) o;
-                    if (!matchesTitle(doc, title))                                       continue;
+                    if (!containsIgnoreCase((String) doc.get('file_name'), fileName))   continue;
                     if (!containsIgnoreCase((String) doc.get('type'), documentType))    continue;
                     if (!containsIgnoreCase((String) doc.get('category'), category))    continue;
                     if (!containsIgnoreCase((String) doc.get('review_status'), reviewStatus)) continue;
@@ -82,12 +82,6 @@ public with sharing class NavigatorController {
         if (String.isBlank(filter)) return true;
         if (String.isBlank(value))  return false;
         return value.toLowerCase().contains(filter.toLowerCase());
-    }
-
-    private static Boolean matchesTitle(Map<String, Object> doc, String title) {
-        if (String.isBlank(title)) return true;
-        return containsIgnoreCase((String) doc.get('file_name'), title)
-            || containsIgnoreCase((String) doc.get('title'), title);
     }
 
     private static Boolean matchesParty(Map<String, Object> doc, String partyName) {

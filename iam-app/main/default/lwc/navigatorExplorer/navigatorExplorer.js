@@ -5,10 +5,10 @@ const AGREEMENT_MANAGER_BASE_URL = 'https://apps-d.docusign.com/send/agreement-m
 
 const COLUMNS = [
     {
-        label: 'タイトル',
+        label: 'ファイル名',
         fieldName: 'agreementUrl',
         type: 'url',
-        typeAttributes: { label: { fieldName: 'title' }, target: '_blank' },
+        typeAttributes: { label: { fieldName: 'fileName' }, target: '_blank' },
         wrapText: true
     },
     { label: '種別',         fieldName: 'type',              type: 'text' },
@@ -34,7 +34,7 @@ export default class NavigatorExplorer extends LightningElement {
     partyName         = '';
     status            = '';
     documentType      = '';
-    title             = '';
+    fileName          = '';
     category          = '';
     reviewStatus      = '';
     sourceName        = '';
@@ -79,7 +79,7 @@ export default class NavigatorExplorer extends LightningElement {
                 partyName:          this.partyName          || null,
                 status:             this.status             || null,
                 documentType:       this.documentType       || null,
-                title:              this.title              || null,
+                fileName:           this.fileName           || null,
                 expirationDateFrom: this.expirationDateFrom || null,
                 expirationDateTo:   this.expirationDateTo   || null,
                 effectiveDateFrom:  this.effectiveDateFrom  || null,
@@ -104,7 +104,7 @@ export default class NavigatorExplorer extends LightningElement {
         this.partyName          = '';
         this.status             = '';
         this.documentType       = '';
-        this.title              = '';
+        this.fileName            = '';
         this.category           = '';
         this.reviewStatus       = '';
         this.sourceName         = '';
@@ -124,7 +124,7 @@ export default class NavigatorExplorer extends LightningElement {
     _flattenAgreements(rawList) {
         return rawList.map(doc => ({
             id:                   doc.id    || '',
-            title:                doc.file_name || doc.title || '（タイトルなし）',
+            fileName:             doc.file_name || '（ファイル名なし）',
             agreementUrl:         doc.id ? (AGREEMENT_MANAGER_BASE_URL + doc.id) : '',
             type:                 doc.type         || '',
             category:             doc.category     || '',
