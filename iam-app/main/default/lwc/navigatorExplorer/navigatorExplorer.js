@@ -64,6 +64,7 @@ export default class NavigatorExplorer extends LightningElement {
     errorMessage              = '';
     summary                   = '';
     searched                  = false;
+    showRawJson               = false;
 
     columns       = COLUMNS;
     statusOptions = STATUS_OPTIONS;
@@ -102,6 +103,11 @@ export default class NavigatorExplorer extends LightningElement {
         return PROVISION_LABELS
             .filter(f => prov[f.key] != null && prov[f.key] !== '')
             .map(f    => ({ label: f.label, value: String(prov[f.key]) }));
+    }
+
+    get detailRawJson() {
+        if (!this.selectedAgreement) return '';
+        return JSON.stringify(this.selectedAgreement, null, 2);
     }
 
     // ── Event handlers ────────────────────────────────────────────────────────
@@ -168,6 +174,7 @@ export default class NavigatorExplorer extends LightningElement {
         this.errorMessage     = '';
         this.selectedAgreement = null;
         this.summary           = '';
+        this.showRawJson       = false;
 
         try {
             const raw              = await getAgreementDetail({ agreementId });
@@ -177,6 +184,10 @@ export default class NavigatorExplorer extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    handleToggleRawJson() {
+        this.showRawJson = !this.showRawJson;
     }
 
     async handleGenerateSummary() {

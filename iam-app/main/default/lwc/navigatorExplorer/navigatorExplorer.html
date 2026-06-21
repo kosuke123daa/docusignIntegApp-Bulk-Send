@@ -224,6 +224,13 @@
                         onclick={handleGenerateSummary}
                         disabled={isSummaryLoading}>
                     </lightning-button>
+                    <lightning-button
+                        variant="neutral"
+                        label="生データ（JSON）を表示"
+                        icon-name="utility:code"
+                        onclick={handleToggleRawJson}
+                        class="slds-m-left_small">
+                    </lightning-button>
 
                     <template lwc:if={isSummaryLoading}>
                         <lightning-spinner alternative-text="要約生成中" size="small" class="slds-m-left_small"></lightning-spinner>
@@ -234,6 +241,10 @@
                             <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_xx-small">AI要約</p>
                             <p class="slds-text-body_regular">{summary}</p>
                         </div>
+                    </template>
+
+                    <template lwc:if={showRawJson}>
+                        <pre class="raw-json-box slds-m-top_small">{detailRawJson}</pre>
                     </template>
                 </div>
 
