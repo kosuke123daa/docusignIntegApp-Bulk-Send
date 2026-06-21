@@ -47,6 +47,46 @@
 
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
                     <lightning-input
+                        label="カテゴリ"
+                        value={category}
+                        placeholder="例: BusinessServices"
+                        onchange={handleInputChange}
+                        data-field="category">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="審査状況"
+                        value={reviewStatus}
+                        placeholder="例: PENDING"
+                        onchange={handleInputChange}
+                        data-field="reviewStatus">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="取込元"
+                        value={sourceName}
+                        placeholder="例: UploadCenter"
+                        onchange={handleInputChange}
+                        data-field="sourceName">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="言語"
+                        value={language}
+                        placeholder="例: ja"
+                        onchange={handleInputChange}
+                        data-field="language">
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
                         type="date"
                         label="満了日（開始）"
                         value={expirationDateFrom}

@@ -11,10 +11,15 @@ const COLUMNS = [
         typeAttributes: { label: { fieldName: 'title' }, target: '_blank' },
         wrapText: true
     },
-    { label: '種別',       fieldName: 'type',            type: 'text' },
-    { label: 'ステータス', fieldName: 'status',          type: 'text' },
-    { label: '満了日',     fieldName: 'expirationDate',  type: 'text' },
-    { label: '取引先',     fieldName: 'parties',         type: 'text', wrapText: true }
+    { label: '種別',         fieldName: 'type',              type: 'text' },
+    { label: 'カテゴリ',     fieldName: 'category',          type: 'text' },
+    { label: 'ステータス',   fieldName: 'status',            type: 'text' },
+    { label: '審査状況',     fieldName: 'reviewStatus',      type: 'text' },
+    { label: '満了日',       fieldName: 'expirationDate',    type: 'text' },
+    { label: '契約総額',     fieldName: 'totalAgreementValue', type: 'text' },
+    { label: '言語',         fieldName: 'languages',         type: 'text' },
+    { label: '取込元',       fieldName: 'sourceName',        type: 'text' },
+    { label: '取引先',       fieldName: 'parties',           type: 'text', wrapText: true }
 ];
 
 const STATUS_OPTIONS = [
@@ -30,6 +35,10 @@ export default class NavigatorExplorer extends LightningElement {
     status            = '';
     documentType      = '';
     title             = '';
+    category          = '';
+    reviewStatus      = '';
+    sourceName        = '';
+    language          = '';
     expirationDateFrom = '';
     expirationDateTo   = '';
     effectiveDateFrom  = '';
@@ -75,7 +84,10 @@ export default class NavigatorExplorer extends LightningElement {
                 expirationDateTo:   this.expirationDateTo   || null,
                 effectiveDateFrom:  this.effectiveDateFrom  || null,
                 effectiveDateTo:    this.effectiveDateTo    || null,
-                sourceName:         null,
+                sourceName:         this.sourceName         || null,
+                category:           this.category           || null,
+                reviewStatus:       this.reviewStatus       || null,
+                language:           this.language           || null,
                 maxResults:         this.maxResults
             });
             const data    = JSON.parse(raw);
@@ -93,6 +105,10 @@ export default class NavigatorExplorer extends LightningElement {
         this.status             = '';
         this.documentType       = '';
         this.title              = '';
+        this.category           = '';
+        this.reviewStatus       = '';
+        this.sourceName         = '';
+        this.language           = '';
         this.expirationDateFrom = '';
         this.expirationDateTo   = '';
         this.effectiveDateFrom  = '';
@@ -107,17 +123,30 @@ export default class NavigatorExplorer extends LightningElement {
 
     _flattenAgreements(rawList) {
         return rawList.map(doc => ({
-            id:             doc.id    || '',
-            title:          doc.title || doc.file_name || '（タイトルなし）',
-            agreementUrl:   doc.id ? (AGREEMENT_MANAGER_BASE_URL + doc.id) : '',
-            type:           doc.type  || '',
-            status:         doc.status || '',
-            expirationDate: (doc.provisions && doc.provisions.expiration_date) || '',
-            parties:        (doc.parties || [])
-                                .map(p => p.name_in_agreement)
-                                .filter(Boolean)
-                                .join(' / ')
+            id:                   doc.id    || '',
+            title:                doc.title || doc.file_name || '（タイトルなし）',
+            agreementUrl:         doc.id ? (AGREEMENT_MANAGER_BASE_URL + doc.id) : '',
+            type:                 doc.type         || '',
+            category:             doc.category     || '',
+            status:               doc.status       || '',
+            reviewStatus:         doc.review_status || '',
+            sourceName:           doc.source_name  || '',
+            expirationDate:       (doc.provisions && doc.provisions.expiration_date) || '',
+            totalAgreementValue:  this._formatValue(doc.provisions),
+            languages:            (doc.languages || []).join(' / '),
+            parties:              (doc.parties || [])
+                                       .map(p => p.name_in_agreement)
+                                       .filter(Boolean)
+                                       .join(' / ')
         }));
+    }
+
+    _formatValue(provisions) {
+        if (!provisions || provisions.total_agreement_value == null) return '';
+        const currency = provisions.total_agreement_value_currency_code || '';
+        return currency
+            ? `${provisions.total_agreement_value} ${currency}`
+            : String(provisions.total_agreement_value);
     }
 
     _extractError(e) {
