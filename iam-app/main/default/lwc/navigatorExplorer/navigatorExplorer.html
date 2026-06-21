@@ -231,6 +231,13 @@
                         onclick={handleToggleRawJson}
                         class="slds-m-left_small">
                     </lightning-button>
+                    <lightning-button
+                        variant="neutral"
+                        label="Agreement Managerで開く"
+                        icon-name="utility:new_window"
+                        onclick={handleOpenInAgreementManager}
+                        class="slds-m-left_small">
+                    </lightning-button>
 
                     <template lwc:if={isSummaryLoading}>
                         <lightning-spinner alternative-text="要約生成中" size="small" class="slds-m-left_small"></lightning-spinner>

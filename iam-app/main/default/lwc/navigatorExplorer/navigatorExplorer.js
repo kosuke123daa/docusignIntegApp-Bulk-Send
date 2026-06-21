@@ -110,6 +110,11 @@ export default class NavigatorExplorer extends LightningElement {
         return JSON.stringify(this.selectedAgreement, null, 2);
     }
 
+    get agreementManagerUrl() {
+        if (!this.selectedAgreement || !this.selectedAgreement.id) return '';
+        return 'https://apps-d.docusign.com/send/agreement-manager/agreements/' + this.selectedAgreement.id;
+    }
+
     // ── Event handlers ────────────────────────────────────────────────────────
 
     handleInputChange(event) {
@@ -188,6 +193,12 @@ export default class NavigatorExplorer extends LightningElement {
 
     handleToggleRawJson() {
         this.showRawJson = !this.showRawJson;
+    }
+
+    handleOpenInAgreementManager() {
+        if (this.agreementManagerUrl) {
+            window.open(this.agreementManagerUrl, '_blank');
+        }
     }
 
     async handleGenerateSummary() {
