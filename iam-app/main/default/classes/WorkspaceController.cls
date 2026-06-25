@@ -32,6 +32,16 @@ public with sharing class WorkspaceController {
         return opp.DocuSign_Workspace_Id__c;
     }
 
+    // ── 商談とワークスペースの紐付けを解除（DocuSign側のワークスペースは削除しない）──
+    @AuraEnabled(cacheable=false)
+    public static void clearSavedWorkspaceId(String opportunityId) {
+        if (String.isBlank(opportunityId)) {
+            return;
+        }
+        Opportunity opp = new Opportunity(Id = opportunityId, DocuSign_Workspace_Id__c = null);
+        update opp;
+    }
+
     // ── 既存ワークスペースIDを商談に保存 ──────────────────────────────────────
 
     @AuraEnabled(cacheable=false)

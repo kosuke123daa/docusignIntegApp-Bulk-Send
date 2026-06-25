@@ -15,6 +15,8 @@ import getWorkspaceEnvelopes      from '@salesforce/apex/WorkspaceController.get
 import getWorkspaceUploadRequests from '@salesforce/apex/WorkspaceController.getWorkspaceUploadRequests';
 import createUploadRequest        from '@salesforce/apex/WorkspaceController.createUploadRequest';
 import saveWorkspaceId            from '@salesforce/apex/WorkspaceController.saveWorkspaceId';
+import clearSavedWorkspaceId      from '@salesforce/apex/WorkspaceController.clearSavedWorkspaceId';
+import LightningConfirm           from 'lightning/confirm';
 
 const FILE_ICON_MAP = {
     pdf:  'doctype:pdf',
@@ -198,6 +200,43 @@ export default class WorkspaceManager extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    async handleUnlinkWorkspace() {
+        const confirmed = await LightningConfirm.open({
+            message: 'この商談とDocuSignワークスペースの紐付けを解除します。'
+                + 'DocuSign側のワークスペース自体は削除されません。よろしいですか？',
+            label: '紐付けの解除',
+            variant: 'header',
+            theme: 'warning'
+        });
+        if (!confirmed) {
+            return;
+        }
+        this.isLoading = true;
+        this._clearMessages();
+        try {
+            await clearSavedWorkspaceId({ opportunityId: this.recordId });
+            this._resetWorkspaceState();
+            this._setSuccess('ワークスペースの紐付けを解除しました。');
+        } catch (e) {
+            this._setError(e);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    // 紐付け解除後、未接続状態に戻す
+    _resetWorkspaceState() {
+        this.workspaceId         = '';
+        this.workspaceName       = '';
+        this.connectWorkspaceId  = '';
+        this.workspaceDocuments  = [];
+        this.workspaceEnvelopes  = [];
+        this.workspaceTasks      = [];
+        this.workspaceUsers      = [];
+        this.assignableRoles     = [];
+        this.selectedDocumentIds = new Set();
     }
 
     async handleRefreshWorkspace() {

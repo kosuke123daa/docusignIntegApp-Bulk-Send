@@ -104,6 +104,15 @@
                                 class="slds-m-top_medium"
                                 disabled={isLoading}>
                             </lightning-button>
+                            <lightning-button
+                                label="紐付けを解除"
+                                title="この商談とDocuSignワークスペースの紐付けを解除します（DocuSign側のワークスペースは削除されません）"
+                                variant="destructive-text"
+                                icon-name="utility:unlink"
+                                onclick={handleUnlinkWorkspace}
+                                class="slds-m-top_medium slds-m-left_x-small"
+                                disabled={isLoading}>
+                            </lightning-button>
 
                             <!-- タスク一覧（アップロード依頼 + エンベロープ統合） -->
                             <div class="slds-m-top_large">
