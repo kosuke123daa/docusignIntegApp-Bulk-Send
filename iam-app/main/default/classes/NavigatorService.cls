@@ -44,10 +44,11 @@ public with sharing class NavigatorService {
     public static final String DEFAULT_SCOPE =
         'signature adm_store_unified_repo_read dtr.rooms.write dtr.rooms.read dtr.company.read dtr.documents.write dtr.documents.read';
 
-    // Agreement Manager への文書アップロード（bulk ingestion）に必要なスコープ。
+    // Agreement Manager への文書アップロード（bulk ingestion / upload jobs）に必要なスコープ。
+    // ※アップロードは adm_store_unified_repo_write ではなく document_uploader_* が必要。
     // ※書き込みスコープは初回に individual/admin consent の取得が必要。
     public static final String UPLOAD_SCOPE =
-        'signature adm_store_unified_repo_read adm_store_unified_repo_write';
+        'signature document_uploader_write document_uploader_read adm_store_unified_repo_read';
 
     public static String getAccessToken(Config cfg) {
         return getAccessToken(cfg, DEFAULT_SCOPE);
