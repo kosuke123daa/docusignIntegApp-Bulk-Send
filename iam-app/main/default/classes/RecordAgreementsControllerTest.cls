@@ -52,10 +52,10 @@ private class RecordAgreementsControllerTest {
     static void testGetAgreementsForRecord_filtersByLinkedData() {
         Test.setMock(HttpCalloutMock.class, new MultiMock());
         Test.startTest();
-        String json = RecordAgreementsController.getAgreementsForRecord(OPP_ID_18);
+        String resultJson = RecordAgreementsController.getAgreementsForRecord(OPP_ID_18);
         Test.stopTest();
 
-        Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(json);
+        Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(resultJson);
         List<Object> data = (List<Object>) root.get('data');
         System.assertEquals(1, data.size(), 'linked_data が一致する1件のみ返るはず');
         Map<String, Object> doc = (Map<String, Object>) data[0];
