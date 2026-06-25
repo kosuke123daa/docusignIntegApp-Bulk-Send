@@ -40,7 +40,20 @@ public with sharing class NavigatorService {
         return cfg;
     }
 
+    // 既存コンポーネント（navigatorExplorer 等）が利用する既定スコープ。
+    public static final String DEFAULT_SCOPE =
+        'signature adm_store_unified_repo_read dtr.rooms.write dtr.rooms.read dtr.company.read dtr.documents.write dtr.documents.read';
+
+    // Agreement Manager への文書アップロード（bulk ingestion）に必要なスコープ。
+    // ※書き込みスコープは初回に individual/admin consent の取得が必要。
+    public static final String UPLOAD_SCOPE =
+        'signature adm_store_unified_repo_read adm_store_unified_repo_write';
+
     public static String getAccessToken(Config cfg) {
+        return getAccessToken(cfg, DEFAULT_SCOPE);
+    }
+
+    public static String getAccessToken(Config cfg, String scope) {
         Long nowSec = DateTime.now().getTime() / 1000;
         Long exp    = nowSec + 3600;
 
@@ -54,7 +67,7 @@ public with sharing class NavigatorService {
             'aud'   => 'account-d.docusign.com',
             'iat'   => nowSec,
             'exp'   => exp,
-            'scope' => 'signature adm_store_unified_repo_read dtr.rooms.write dtr.rooms.read dtr.company.read dtr.documents.write dtr.documents.read'
+            'scope' => scope
         };
 
         String signingInput = base64UrlEncode(Blob.valueOf(JSON.serialize(headerMap)))
